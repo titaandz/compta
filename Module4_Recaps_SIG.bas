@@ -2,6 +2,20 @@ Attribute VB_Name = "Module4_Recaps_SIG"
 Option Explicit
 
 ' ============================================================
+' HELPER P&L - doit etre au niveau module (pas imbriquee)
+' ============================================================
+Sub EcrireLignePL(ws As Worksheet, ligne As Long, libelle As String, note As String, valN As Double, valN1 As Double, caRef As Double)
+    ws.Cells(ligne, 1).Value = libelle
+    ws.Cells(ligne, 2).Value = note
+    ws.Cells(ligne, 3).Value = valN
+    ws.Cells(ligne, 4).Value = valN1
+    ws.Cells(ligne, 5).Value = valN - valN1
+    If valN1 <> 0 Then ws.Cells(ligne, 6).Value = (valN - valN1) / Abs(valN1)
+    If caRef <> 0 Then ws.Cells(ligne, 7).Value = valN / caRef
+    If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 7)).Interior.Color = RGB(242, 242, 242)
+End Sub
+
+' ============================================================
 ' RECAPITULATIF BILAN
 ' ============================================================
 Sub CreerRecapBilan()
@@ -9,9 +23,7 @@ Sub CreerRecapBilan()
     Dim ligne As Long
 
     Set ws = CreerOnglet("Recap Bilan", COULEUR_RECAP)
-    ws.Tab.Color = RGB(128, 128, 128)
 
-    ' En-tete
     With ws.Range("A1:I1")
         .Merge
         .Value = "BILAN COMPTABLE RECAPITULATIF - Normes PCG / ANC"
@@ -21,7 +33,6 @@ Sub CreerRecapBilan()
         .Font.Size = 14
         .HorizontalAlignment = xlCenter
     End With
-
     With ws.Range("A2:I2")
         .Merge
         .Value = "Exercices N et N-1 - en euros"
@@ -30,13 +41,15 @@ Sub CreerRecapBilan()
         .HorizontalAlignment = xlCenter
     End With
 
-    ' En-tetes colonnes
-    Dim entetes() As String
-    entetes = Split("Poste bilan,Notes,Brut N,Amort/Dep N,Net N,Net N-1,Variation,Var. %,% Total", ",")
-    Dim c As Integer
-    For c = 0 To UBound(entetes)
-        ws.Cells(3, c + 1).Value = entetes(c)
-    Next c
+    ws.Cells(3, 1).Value = "Poste bilan"
+    ws.Cells(3, 2).Value = "Notes"
+    ws.Cells(3, 3).Value = "Brut N"
+    ws.Cells(3, 4).Value = "Amort/Dep N"
+    ws.Cells(3, 5).Value = "Net N"
+    ws.Cells(3, 6).Value = "Net N-1"
+    ws.Cells(3, 7).Value = "Variation"
+    ws.Cells(3, 8).Value = "Var. %"
+    ws.Cells(3, 9).Value = "% Total"
     With ws.Range("A3:I3")
         .Font.Bold = True
         .Interior.Color = RGB(189, 215, 238)
@@ -45,7 +58,6 @@ Sub CreerRecapBilan()
 
     ligne = 4
 
-    ' Calcul des soldes
     ' ==================== ACTIF ====================
     ws.Cells(ligne, 1).Value = "ACTIF"
     With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 9))
@@ -56,22 +68,11 @@ Sub CreerRecapBilan()
     End With
     ligne = ligne + 1
 
-    ' --- ACTIF IMMOBILISE ---
     ws.Cells(ligne, 1).Value = "ACTIF IMMOBILISE"
     ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 9)).Interior.Color = RGB(189, 215, 238)
     ws.Cells(ligne, 1).Font.Bold = True
     ligne = ligne + 1
 
-    Dim immIncorpBrutN As Double, immIncorpAmortN As Double
-    Dim immCorpBrutN As Double, immCorpAmortN As Double
-    Dim immFinBrutN As Double
-
-    immIncorpBrutN = GetSoldeCompteN("20") + GetSoldeCompteN("21") + GetSoldeCompteN("22")
-    immCorpBrutN = GetSoldeCompteN("21") + GetSoldeCompteN("22") + GetSoldeCompteN("23")
-    immCorpAmortN = GetSoldeCompteN("28") + GetSoldeCompteN("29")
-    immFinBrutN = GetSoldeCompteN("26") + GetSoldeCompteN("27")
-
-    ' Immo incorporelles
     Dim iiBrutN As Double, iiAmortN As Double, iiNetN As Double, iiNetN1 As Double
     iiBrutN = GetSoldeCompteN("20")
     iiAmortN = GetSoldeCompteN("280")
@@ -80,7 +81,6 @@ Sub CreerRecapBilan()
     Call EcrireLigneBilan(ws, ligne, "Immobilisations incorporelles", "Note 1", iiBrutN, iiAmortN, iiNetN, iiNetN1)
     ligne = ligne + 1
 
-    ' Immo corporelles
     Dim icBrutN As Double, icAmortN As Double, icNetN As Double, icNetN1 As Double
     icBrutN = GetSoldeCompteN("21") + GetSoldeCompteN("22") + GetSoldeCompteN("23")
     icAmortN = GetSoldeCompteN("28")
@@ -89,7 +89,6 @@ Sub CreerRecapBilan()
     Call EcrireLigneBilan(ws, ligne, "Immobilisations corporelles", "Note 2", icBrutN, icAmortN, icNetN, icNetN1)
     ligne = ligne + 1
 
-    ' Immo financieres
     Dim ifBrutN As Double, ifDepN As Double, ifNetN As Double, ifNetN1 As Double
     ifBrutN = GetSoldeCompteN("26") + GetSoldeCompteN("27")
     ifDepN = GetSoldeCompteN("296") + GetSoldeCompteN("297")
@@ -104,13 +103,11 @@ Sub CreerRecapBilan()
     Call EcrireSousTotal9(ws, ligne, "TOTAL ACTIF IMMOBILISE", 0, 0, totalActImmN, totalActImmN1)
     ligne = ligne + 2
 
-    ' --- ACTIF CIRCULANT ---
     ws.Cells(ligne, 1).Value = "ACTIF CIRCULANT"
     ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 9)).Interior.Color = RGB(189, 215, 238)
     ws.Cells(ligne, 1).Font.Bold = True
     ligne = ligne + 1
 
-    ' Stocks
     Dim stBrutN As Double, stDepN As Double, stNetN As Double, stNetN1 As Double
     stBrutN = GetSoldeCompteN("31") + GetSoldeCompteN("32") + GetSoldeCompteN("33") + GetSoldeCompteN("34") + GetSoldeCompteN("35") + GetSoldeCompteN("37")
     stDepN = GetSoldeCompteN("39")
@@ -119,7 +116,6 @@ Sub CreerRecapBilan()
     Call EcrireLigneBilan(ws, ligne, "Stocks et en-cours", "Note 4", stBrutN, stDepN, stNetN, stNetN1)
     ligne = ligne + 1
 
-    ' Creances clients
     Dim cliBrutN As Double, cliDepN As Double, cliNetN As Double, cliNetN1 As Double
     cliBrutN = GetSoldeCompteN("41")
     cliDepN = GetSoldeCompteN("490")
@@ -128,20 +124,18 @@ Sub CreerRecapBilan()
     Call EcrireLigneBilan(ws, ligne, "Creances clients", "Note 5", cliBrutN, cliDepN, cliNetN, cliNetN1)
     ligne = ligne + 1
 
-    ' Autres creances
     Dim autBrutN As Double, autNetN As Double, autNetN1 As Double
     autBrutN = GetSoldeCompteN("42") + GetSoldeCompteN("43") + GetSoldeCompteN("44") + GetSoldeCompteN("45") + GetSoldeCompteN("46") + GetSoldeCompteN("48")
     autNetN = autBrutN
     autNetN1 = GetSoldeCompteN1("42") + GetSoldeCompteN1("43") + GetSoldeCompteN1("44") + GetSoldeCompteN1("45") + GetSoldeCompteN1("46") + GetSoldeCompteN1("48")
-    Call EcrireLigneBilan(ws, ligne, "Autres creances et comptes de regularisation", "Note 6", autBrutN, 0, autNetN, autNetN1)
+    Call EcrireLigneBilan(ws, ligne, "Autres creances et regularisation", "Note 6", autBrutN, 0, autNetN, autNetN1)
     ligne = ligne + 1
 
-    ' VMP + Tresorerie
     Dim tresBrutN As Double, tresNetN As Double, tresNetN1 As Double
     tresBrutN = GetSoldeCompteN("50") + GetSoldeCompteN("51") + GetSoldeCompteN("53") + GetSoldeCompteN("54")
     tresNetN = tresBrutN
     tresNetN1 = GetSoldeCompteN1("50") + GetSoldeCompteN1("51") + GetSoldeCompteN1("53") + GetSoldeCompteN1("54")
-    Call EcrireLigneBilan(ws, ligne, "Valeurs mobilieres et disponibilites", "Note 7", tresBrutN, 0, tresNetN, tresNetN1)
+    Call EcrireLigneBilan(ws, ligne, "Disponibilites et VMP", "Note 7", tresBrutN, 0, tresNetN, tresNetN1)
     ligne = ligne + 1
 
     Dim totalActCircN As Double, totalActCircN1 As Double
@@ -166,17 +160,16 @@ Sub CreerRecapBilan()
     End With
     ligne = ligne + 1
 
-    ' Capitaux propres
     ws.Cells(ligne, 1).Value = "CAPITAUX PROPRES"
     ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 9)).Interior.Color = RGB(189, 215, 238)
     ws.Cells(ligne, 1).Font.Bold = True
     ligne = ligne + 1
 
     Dim capN As Double, capN1 As Double
-    capN = -(GetSoldeCompteN("101") + GetSoldeCompteN("104") + GetSoldeCompteN("105") + GetSoldeCompteN("106") + GetSoldeCompteN("107") + GetSoldeCompteN("108") + GetSoldeCompteN("11") + GetSoldeCompteN("12") + GetSoldeCompteN("13") + GetSoldeCompteN("14"))
-    capN1 = -(GetSoldeCompteN1("101") + GetSoldeCompteN1("104") + GetSoldeCompteN1("105") + GetSoldeCompteN1("106") + GetSoldeCompteN1("107") + GetSoldeCompteN1("108") + GetSoldeCompteN1("11") + GetSoldeCompteN1("12") + GetSoldeCompteN1("13") + GetSoldeCompteN1("14"))
+    capN = -(GetSoldeCompteN("101") + GetSoldeCompteN("104") + GetSoldeCompteN("105") + GetSoldeCompteN("106") + GetSoldeCompteN("107") + GetSoldeCompteN("108") + GetSoldeCompteN("11") + GetSoldeCompteN("13") + GetSoldeCompteN("14"))
+    capN1 = -(GetSoldeCompteN1("101") + GetSoldeCompteN1("104") + GetSoldeCompteN1("105") + GetSoldeCompteN1("106") + GetSoldeCompteN1("107") + GetSoldeCompteN1("108") + GetSoldeCompteN1("11") + GetSoldeCompteN1("13") + GetSoldeCompteN1("14"))
 
-    ws.Cells(ligne, 1).Value = "Capital, réserves et report à nouveau"
+    ws.Cells(ligne, 1).Value = "Capital, reserves et report a nouveau"
     ws.Cells(ligne, 2).Value = "Note 8"
     ws.Cells(ligne, 5).Value = capN
     ws.Cells(ligne, 6).Value = capN1
@@ -189,7 +182,7 @@ Sub CreerRecapBilan()
     Dim resN As Double, resN1 As Double
     resN = -GetSoldeCompteN("12")
     resN1 = -GetSoldeCompteN1("12")
-    ws.Cells(ligne, 1).Value = "Résultat de l'exercice"
+    ws.Cells(ligne, 1).Value = "Resultat de l'exercice"
     ws.Cells(ligne, 5).Value = resN
     ws.Cells(ligne, 6).Value = resN1
     ws.Cells(ligne, 7).Value = resN - resN1
@@ -198,25 +191,12 @@ Sub CreerRecapBilan()
     If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 9)).Interior.Color = RGB(242, 242, 242)
     ligne = ligne + 1
 
-    Dim subvN As Double, subvN1 As Double
-    subvN = -GetSoldeCompteN("13")
-    subvN1 = -GetSoldeCompteN1("13")
-    If subvN <> 0 Or subvN1 <> 0 Then
-        ws.Cells(ligne, 1).Value = "Subventions d'investissement"
-        ws.Cells(ligne, 5).Value = subvN
-        ws.Cells(ligne, 6).Value = subvN1
-        ws.Cells(ligne, 7).Value = subvN - subvN1
-        If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 9)).Interior.Color = RGB(242, 242, 242)
-        ligne = ligne + 1
-    End If
-
     Dim totalCPN As Double, totalCPN1 As Double
-    totalCPN = capN + resN + subvN
-    totalCPN1 = capN1 + resN1 + subvN1
+    totalCPN = capN + resN
+    totalCPN1 = capN1 + resN1
     Call EcrireSousTotal9(ws, ligne, "TOTAL CAPITAUX PROPRES", 0, 0, totalCPN, totalCPN1)
     ligne = ligne + 2
 
-    ' Provisions pour R&C
     Dim prcN As Double, prcN1 As Double
     prcN = -GetSoldeCompteN("15")
     prcN1 = -GetSoldeCompteN1("15")
@@ -229,13 +209,11 @@ Sub CreerRecapBilan()
     If totalActifN <> 0 Then ws.Cells(ligne, 9).Value = prcN / totalActifN
     ligne = ligne + 2
 
-    ' Dettes
     ws.Cells(ligne, 1).Value = "DETTES"
     ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 9)).Interior.Color = RGB(189, 215, 238)
     ws.Cells(ligne, 1).Font.Bold = True
     ligne = ligne + 1
 
-    ' Dettes financieres
     Dim dfN As Double, dfN1 As Double
     dfN = -(GetSoldeCompteN("16") + GetSoldeCompteN("519"))
     dfN1 = -(GetSoldeCompteN1("16") + GetSoldeCompteN1("519"))
@@ -249,7 +227,6 @@ Sub CreerRecapBilan()
     If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 9)).Interior.Color = RGB(242, 242, 242)
     ligne = ligne + 1
 
-    ' Dettes fournisseurs
     Dim dfournN As Double, dfournN1 As Double
     dfournN = -GetSoldeCompteN("40")
     dfournN1 = -GetSoldeCompteN1("40")
@@ -262,15 +239,9 @@ Sub CreerRecapBilan()
     If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 9)).Interior.Color = RGB(242, 242, 242)
     ligne = ligne + 1
 
-    ' Dettes fiscales sociales
     Dim dfsN As Double, dfsN1 As Double
-    dfsN = -(GetSoldeCompteN("42") + GetSoldeCompteN("43") + GetSoldeCompteN("44") + GetSoldeCompteN("45"))
-    dfsN1 = -(GetSoldeCompteN1("42") + GetSoldeCompteN1("43") + GetSoldeCompteN1("44") + GetSoldeCompteN1("45"))
-    ' Filtrer uniquement les soldes crediteurs
-    If dfsN > 0 Then dfsN = 0
-    If dfsN1 > 0 Then dfsN1 = 0
-    dfsN = Abs(dfsN)
-    dfsN1 = Abs(dfsN1)
+    dfsN = Abs(GetSoldeCompteN("42")) + Abs(GetSoldeCompteN("43")) + Abs(GetSoldeCompteN("44")) + Abs(GetSoldeCompteN("45"))
+    dfsN1 = Abs(GetSoldeCompteN1("42")) + Abs(GetSoldeCompteN1("43")) + Abs(GetSoldeCompteN1("44")) + Abs(GetSoldeCompteN1("45"))
     ws.Cells(ligne, 1).Value = "Dettes fiscales et sociales"
     ws.Cells(ligne, 5).Value = dfsN
     ws.Cells(ligne, 6).Value = dfsN1
@@ -280,10 +251,9 @@ Sub CreerRecapBilan()
     If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 9)).Interior.Color = RGB(242, 242, 242)
     ligne = ligne + 1
 
-    ' Autres dettes
     Dim adN As Double, adN1 As Double
-    adN = -(GetSoldeCompteN("46") + GetSoldeCompteN("48"))
-    adN1 = -(GetSoldeCompteN1("46") + GetSoldeCompteN1("48"))
+    adN = Abs(GetSoldeCompteN("46")) + Abs(GetSoldeCompteN("487"))
+    adN1 = Abs(GetSoldeCompteN1("46")) + Abs(GetSoldeCompteN1("487"))
     ws.Cells(ligne, 1).Value = "Autres dettes et comptes de regularisation"
     ws.Cells(ligne, 5).Value = adN
     ws.Cells(ligne, 6).Value = adN1
@@ -305,8 +275,7 @@ Sub CreerRecapBilan()
     Call EcrireTotalBilan(ws, ligne, "TOTAL PASSIF", totalPassifN, totalPassifN1)
     ligne = ligne + 2
 
-    ' Verification equilibre bilan
-    ws.Cells(ligne, 1).Value = "VERIFICATION : Actif - Passif ="
+    ws.Cells(ligne, 1).Value = "VERIFICATION : Actif - Passif (doit etre proche de zero)"
     ws.Cells(ligne, 5).Value = totalActifN - totalPassifN
     ws.Cells(ligne, 6).Value = totalActifN1 - totalPassifN1
     ws.Cells(ligne, 5).NumberFormat = "#,##0;[Red]-#,##0"
@@ -314,16 +283,14 @@ Sub CreerRecapBilan()
     ws.Cells(ligne, 1).Font.Italic = True
     ws.Cells(ligne, 1).Font.Color = RGB(128, 128, 128)
 
-    ' Formatage global
     ws.Columns("A").ColumnWidth = 45
     ws.Columns("B").ColumnWidth = 10
     ws.Columns("C:I").ColumnWidth = 16
-    ws.Range("C4:H200").NumberFormat = "#,##0;[Red]-#,##0"
-    ws.Range("H4:H200").NumberFormat = "0.0%"
-    ws.Range("I4:I200").NumberFormat = "0.0%"
+    ws.Range("C4:H500").NumberFormat = "#,##0;[Red]-#,##0"
+    ws.Range("H4:H500").NumberFormat = "0.0%"
+    ws.Range("I4:I500").NumberFormat = "0.0%"
 End Sub
 
-' Helpers pour le bilan
 Sub EcrireLigneBilan(ws As Worksheet, Ligne As Long, Libelle As String, Note As String, Brut As Double, AmortDep As Double, NetN As Double, NetN1 As Double)
     ws.Cells(Ligne, 1).Value = Libelle
     ws.Cells(Ligne, 2).Value = Note
@@ -392,12 +359,13 @@ Sub CreerRecapPL()
         .HorizontalAlignment = xlCenter
     End With
 
-    Dim entetes() As String
-    entetes = Split("Rubrique,Notes,Montant N,Montant N-1,Variation,Var. %,% CA", ",")
-    Dim c As Integer
-    For c = 0 To UBound(entetes)
-        ws.Cells(3, c + 1).Value = entetes(c)
-    Next c
+    ws.Cells(3, 1).Value = "Rubrique"
+    ws.Cells(3, 2).Value = "Notes"
+    ws.Cells(3, 3).Value = "Montant N"
+    ws.Cells(3, 4).Value = "Montant N-1"
+    ws.Cells(3, 5).Value = "Variation"
+    ws.Cells(3, 6).Value = "Var. %"
+    ws.Cells(3, 7).Value = "% CA"
     With ws.Range("A3:G3")
         .Font.Bold = True
         .Interior.Color = RGB(198, 224, 180)
@@ -406,7 +374,6 @@ Sub CreerRecapPL()
 
     ligne = 4
 
-    ' Calcul des soldes clés
     Dim caN As Double, caN1 As Double
     caN = -GetSoldeCompteN("70")
     caN1 = -GetSoldeCompteN1("70")
@@ -471,52 +438,21 @@ Sub CreerRecapPL()
     isN = GetSoldeCompteN("695") + GetSoldeCompteN("691")
     isN1 = GetSoldeCompteN1("695") + GetSoldeCompteN1("691")
 
-    ' Production de l'exercice
-    Dim productionN As Double, productionN1 As Double
-    productionN = caN + prodStockN + prodImmN
-    productionN1 = caN1 + prodStockN1 + prodImmN1
-
-    ' Valeur Ajoutee
-    Dim vaH As Double, vaH1 As Double
-    vaH = productionN - achatsN - servExtN
-    vaH1 = productionN1 - achatsN1 - servExtN1
-
-    ' EBE
-    Dim ebeN As Double, ebeN1 As Double
-    ebeN = vaH + subvExplN - impotsTaxesN - personnelN
-    ebeN1 = vaH1 + subvExplN1 - impotsTaxesN1 - personnelN1
-
-    ' REX
     Dim rexN As Double, rexN1 As Double
-    rexN = ebeN - dotN + autProdExplN - autChargesN
-    rexN1 = ebeN1 - dotN1 + autProdExplN1 - autChargesN1
+    rexN = caN + prodStockN + prodImmN + subvExplN + autProdExplN - achatsN - servExtN - impotsTaxesN - personnelN - dotN - autChargesN
+    rexN1 = caN1 + prodStockN1 + prodImmN1 + subvExplN1 + autProdExplN1 - achatsN1 - servExtN1 - impotsTaxesN1 - personnelN1 - dotN1 - autChargesN1
 
-    ' Resultat courant
     Dim rcaN As Double, rcaN1 As Double
     rcaN = rexN + prodFinN - chargesFinN
     rcaN1 = rexN1 + prodFinN1 - chargesFinN1
 
-    ' Resultat exceptionnel
     Dim resExcN As Double, resExcN1 As Double
     resExcN = prodExcN - chargesExcN
     resExcN1 = prodExcN1 - chargesExcN1
 
-    ' Resultat net
     Dim resNetN As Double, resNetN1 As Double
     resNetN = rcaN + resExcN - isN
     resNetN1 = rcaN1 + resExcN1 - isN1
-
-    ' ---- Ecriture des lignes ----
-    Sub EcrireLignePL(ws As Worksheet, ligne As Long, libelle As String, note As String, valN As Double, valN1 As Double, caRef As Double)
-        ws.Cells(ligne, 1).Value = libelle
-        ws.Cells(ligne, 2).Value = note
-        ws.Cells(ligne, 3).Value = valN
-        ws.Cells(ligne, 4).Value = valN1
-        ws.Cells(ligne, 5).Value = valN - valN1
-        If valN1 <> 0 Then ws.Cells(ligne, 6).Value = (valN - valN1) / Abs(valN1)
-        If caRef <> 0 Then ws.Cells(ligne, 7).Value = valN / caRef
-        If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 7)).Interior.Color = RGB(242, 242, 242)
-    End Sub
 
     ' Produits exploitation
     ws.Cells(ligne, 1).Value = "PRODUITS D'EXPLOITATION"
@@ -528,15 +464,14 @@ Sub CreerRecapPL()
     ligne = ligne + 1
 
     Call EcrireLignePL(ws, ligne, "Chiffre d'affaires HT", "Note PL1", caN, caN1, caN) : ligne = ligne + 1
-    Call EcrireLignePL(ws, ligne, "Production stockee", "Note PL2", prodStockN, prodStockN1, caN) : ligne = ligne + 1
-    Call EcrireLignePL(ws, ligne, "Production immobilisee", "Note PL3", prodImmN, prodImmN1, caN) : ligne = ligne + 1
-    Call EcrireLignePL(ws, ligne, "Subventions d'exploitation", "Note PL4", subvExplN, subvExplN1, caN) : ligne = ligne + 1
+    Call EcrireLignePL(ws, ligne, "Production stockee (71)", "Note PL2", prodStockN, prodStockN1, caN) : ligne = ligne + 1
+    Call EcrireLignePL(ws, ligne, "Production immobilisee (72)", "Note PL3", prodImmN, prodImmN1, caN) : ligne = ligne + 1
+    Call EcrireLignePL(ws, ligne, "Subventions d'exploitation (74)", "Note PL4", subvExplN, subvExplN1, caN) : ligne = ligne + 1
     Call EcrireLignePL(ws, ligne, "Autres produits exploitation (75+781+791)", "", autProdExplN, autProdExplN1, caN) : ligne = ligne + 1
 
     Dim totProdExplN As Double, totProdExplN1 As Double
     totProdExplN = caN + prodStockN + prodImmN + subvExplN + autProdExplN
     totProdExplN1 = caN1 + prodStockN1 + prodImmN1 + subvExplN1 + autProdExplN1
-
     ws.Cells(ligne, 1).Value = "TOTAL PRODUITS EXPLOITATION"
     ws.Cells(ligne, 3).Value = totProdExplN
     ws.Cells(ligne, 4).Value = totProdExplN1
@@ -565,7 +500,6 @@ Sub CreerRecapPL()
     Dim totChargesExplN As Double, totChargesExplN1 As Double
     totChargesExplN = achatsN + servExtN + impotsTaxesN + personnelN + dotN + autChargesN
     totChargesExplN1 = achatsN1 + servExtN1 + impotsTaxesN1 + personnelN1 + dotN1 + autChargesN1
-
     ws.Cells(ligne, 1).Value = "TOTAL CHARGES EXPLOITATION"
     ws.Cells(ligne, 3).Value = totChargesExplN
     ws.Cells(ligne, 4).Value = totChargesExplN1
@@ -590,7 +524,6 @@ Sub CreerRecapPL()
     End With
     ligne = ligne + 2
 
-    ' Financier
     Call EcrireLignePL(ws, ligne, "Produits financiers (76+786+796)", "", prodFinN, prodFinN1, caN) : ligne = ligne + 1
     Call EcrireLignePL(ws, ligne, "Charges financieres (66+686+696)", "", chargesFinN, chargesFinN1, caN) : ligne = ligne + 1
 
@@ -618,7 +551,6 @@ Sub CreerRecapPL()
     End With
     ligne = ligne + 2
 
-    ' Exceptionnel
     Call EcrireLignePL(ws, ligne, "Produits exceptionnels (77+787+797)", "", prodExcN, prodExcN1, caN) : ligne = ligne + 1
     Call EcrireLignePL(ws, ligne, "Charges exceptionnelles (67+687+697)", "", chargesExcN, chargesExcN1, caN) : ligne = ligne + 1
 
@@ -631,10 +563,8 @@ Sub CreerRecapPL()
     ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 7)).Font.Bold = True
     ligne = ligne + 2
 
-    Call EcrireLignePL(ws, ligne, "Participation + IS (69x)", "", isN, isN1, caN) : ligne = ligne + 1
-    ligne = ligne + 1
+    Call EcrireLignePL(ws, ligne, "Participation + IS (69x)", "", isN, isN1, caN) : ligne = ligne + 2
 
-    ' Resultat net
     ws.Cells(ligne, 1).Value = "RESULTAT NET DE L'EXERCICE"
     ws.Cells(ligne, 3).Value = resNetN
     ws.Cells(ligne, 4).Value = resNetN1
@@ -648,17 +578,16 @@ Sub CreerRecapPL()
         .Font.Size = 13
     End With
 
-    ' Formatage
     ws.Columns("A").ColumnWidth = 50
     ws.Columns("B").ColumnWidth = 12
     ws.Columns("C:G").ColumnWidth = 16
-    ws.Range("C4:F200").NumberFormat = "#,##0;[Red]-#,##0"
-    ws.Range("F4:F200").NumberFormat = "0.0%"
-    ws.Range("G4:G200").NumberFormat = "0.0%"
+    ws.Range("C4:F500").NumberFormat = "#,##0;[Red]-#,##0"
+    ws.Range("F4:F500").NumberFormat = "0.0%"
+    ws.Range("G4:G500").NumberFormat = "0.0%"
 End Sub
 
 ' ============================================================
-' SOLDES INTERMEDIAIRES DE GESTION (SIG)
+' SIG
 ' ============================================================
 Sub CreerOngletSIG()
     Dim ws As Worksheet
@@ -668,7 +597,7 @@ Sub CreerOngletSIG()
 
     With ws.Range("A1:H1")
         .Merge
-        .Value = "SOLDES INTERMEDIAIRES DE GESTION (SIG) - Tableau de la CNC"
+        .Value = "SOLDES INTERMEDIAIRES DE GESTION (SIG)"
         .Interior.Color = RGB(197, 90, 17)
         .Font.Color = RGB(255, 255, 255)
         .Font.Bold = True
@@ -677,7 +606,7 @@ Sub CreerOngletSIG()
     End With
     With ws.Range("A2:H2")
         .Merge
-        .Value = "Analyse de la formation du résultat - exercices N et N-1"
+        .Value = "Analyse de la formation du resultat - exercices N et N-1"
         .Interior.Color = RGB(255, 153, 0)
         .Font.Color = RGB(255, 255, 255)
         .HorizontalAlignment = xlCenter
@@ -698,12 +627,10 @@ Sub CreerOngletSIG()
 
     ligne = 4
 
-    ' Calcul des soldes
     Dim caN As Double, caN1 As Double
     caN = -GetSoldeCompteN("70")
     caN1 = -GetSoldeCompteN1("70")
 
-    ' Marge commerciale = Ventes marchandises - Coût achats marchandises
     Dim venteMarcN As Double, venteMarcN1 As Double
     Dim coutMarcN As Double, coutMarcN1 As Double
     venteMarcN = -GetSoldeCompteN("707")
@@ -714,110 +641,71 @@ Sub CreerOngletSIG()
     margeComN = venteMarcN - coutMarcN
     margeComN1 = venteMarcN1 - coutMarcN1
 
-    ' Production de l'exercice
     Dim prodN As Double, prodN1 As Double
     prodN = caN + (-GetSoldeCompteN("71")) + (-GetSoldeCompteN("72"))
     prodN1 = caN1 + (-GetSoldeCompteN1("71")) + (-GetSoldeCompteN1("72"))
 
-    ' Valeur ajoutee
     Dim vaH As Double, vaH1 As Double
-    vaH = margeComN + prodN - caN - GetSoldeCompteN("60") - GetSoldeCompteN("61") - GetSoldeCompteN("62")
-    vaH1 = margeComN1 + prodN1 - caN1 - GetSoldeCompteN1("60") - GetSoldeCompteN1("61") - GetSoldeCompteN1("62")
+    vaH = prodN - GetSoldeCompteN("60") - GetSoldeCompteN("61") - GetSoldeCompteN("62")
+    vaH1 = prodN1 - GetSoldeCompteN1("60") - GetSoldeCompteN1("61") - GetSoldeCompteN1("62")
 
-    ' EBE
     Dim subvExplN As Double, subvExplN1 As Double
     subvExplN = -GetSoldeCompteN("74")
     subvExplN1 = -GetSoldeCompteN1("74")
+
     Dim personnelN As Double, personnelN1 As Double
     personnelN = GetSoldeCompteN("64")
     personnelN1 = GetSoldeCompteN1("64")
+
     Dim impotsTaxesN As Double, impotsTaxesN1 As Double
     impotsTaxesN = GetSoldeCompteN("63")
     impotsTaxesN1 = GetSoldeCompteN1("63")
+
     Dim ebeN As Double, ebeN1 As Double
     ebeN = vaH + subvExplN - impotsTaxesN - personnelN
     ebeN1 = vaH1 + subvExplN1 - impotsTaxesN1 - personnelN1
 
-    ' REX
     Dim dotN As Double, dotN1 As Double
     dotN = GetSoldeCompteN("681")
     dotN1 = GetSoldeCompteN1("681")
-    Dim reprisesExplN As Double, reprisesExplN1 As Double
-    reprisesExplN = -GetSoldeCompteN("781") - GetSoldeCompteN("791")
-    reprisesExplN1 = -GetSoldeCompteN1("781") - GetSoldeCompteN1("791")
-    Dim autChargesN As Double, autChargesN1 As Double
-    autChargesN = GetSoldeCompteN("65") - (-GetSoldeCompteN("75"))
-    autChargesN1 = GetSoldeCompteN1("65") - (-GetSoldeCompteN1("75"))
-    Dim rexN As Double, rexN1 As Double
-    rexN = ebeN - dotN + reprisesExplN - autChargesN
-    rexN1 = ebeN1 - dotN1 + reprisesExplN1 - autChargesN1
 
-    ' Resultat courant
+    Dim rexN As Double, rexN1 As Double
+    rexN = ebeN - dotN + (-GetSoldeCompteN("75")) + (-GetSoldeCompteN("781")) + (-GetSoldeCompteN("791")) - GetSoldeCompteN("65")
+    rexN1 = ebeN1 - dotN1 + (-GetSoldeCompteN1("75")) + (-GetSoldeCompteN1("781")) + (-GetSoldeCompteN1("791")) - GetSoldeCompteN1("65")
+
     Dim prodFinN As Double, prodFinN1 As Double
     Dim chargesFinN As Double, chargesFinN1 As Double
     prodFinN = -GetSoldeCompteN("76") - GetSoldeCompteN("786") - GetSoldeCompteN("796")
     prodFinN1 = -GetSoldeCompteN1("76") - GetSoldeCompteN1("786") - GetSoldeCompteN1("796")
     chargesFinN = GetSoldeCompteN("66") + GetSoldeCompteN("686") + GetSoldeCompteN("696")
     chargesFinN1 = GetSoldeCompteN1("66") + GetSoldeCompteN1("686") + GetSoldeCompteN1("696")
+
     Dim rcaN As Double, rcaN1 As Double
     rcaN = rexN + prodFinN - chargesFinN
     rcaN1 = rexN1 + prodFinN1 - chargesFinN1
 
-    ' Resultat exceptionnel
-    Dim prodExcN As Double, prodExcN1 As Double
-    Dim chargesExcN As Double, chargesExcN1 As Double
-    prodExcN = -GetSoldeCompteN("77") - GetSoldeCompteN("787") - GetSoldeCompteN("797")
-    prodExcN1 = -GetSoldeCompteN1("77") - GetSoldeCompteN1("787") - GetSoldeCompteN1("797")
-    chargesExcN = GetSoldeCompteN("67") + GetSoldeCompteN("687") + GetSoldeCompteN("697")
-    chargesExcN1 = GetSoldeCompteN1("67") + GetSoldeCompteN1("687") + GetSoldeCompteN1("697")
     Dim resExcN As Double, resExcN1 As Double
-    resExcN = prodExcN - chargesExcN
-    resExcN1 = prodExcN1 - chargesExcN1
+    resExcN = (-GetSoldeCompteN("77") - GetSoldeCompteN("787") - GetSoldeCompteN("797")) - (GetSoldeCompteN("67") + GetSoldeCompteN("687") + GetSoldeCompteN("697"))
+    resExcN1 = (-GetSoldeCompteN1("77") - GetSoldeCompteN1("787") - GetSoldeCompteN1("797")) - (GetSoldeCompteN1("67") + GetSoldeCompteN1("687") + GetSoldeCompteN1("697"))
 
-    ' IS
     Dim isN As Double, isN1 As Double
     isN = GetSoldeCompteN("695") + GetSoldeCompteN("691")
     isN1 = GetSoldeCompteN1("695") + GetSoldeCompteN1("691")
 
-    ' Resultat net
     Dim resNetN As Double, resNetN1 As Double
     resNetN = rcaN + resExcN - isN
     resNetN1 = rcaN1 + resExcN1 - isN1
 
-    ' ---- Ecriture du tableau SIG ----
-    Call EcrireLigneSIG(ws, ligne, "1. MARGE COMMERCIALE", "Ventes marchandises - Coût achats marchandises", margeComN, margeComN1, caN, caN1, True)
-    ligne = ligne + 2
+    Call EcrireLigneSIG(ws, ligne, "1. MARGE COMMERCIALE", "Ventes marchandises - Cout achats marchandises", margeComN, margeComN1, caN, caN1) : ligne = ligne + 2
+    Call EcrireLigneSIG(ws, ligne, "2. PRODUCTION DE L'EXERCICE", "CA + Prod. stockee + Prod. immobilisee", prodN, prodN1, caN, caN1) : ligne = ligne + 2
+    Call EcrireLigneSIG(ws, ligne, "3. VALEUR AJOUTEE (VA)", "Prod. exercice - Consommations intermediaires", vaH, vaH1, caN, caN1) : ligne = ligne + 2
+    Call EcrireLigneSIG(ws, ligne, "4. EXCEDENT BRUT D'EXPLOITATION (EBE)", "VA + Subv. expl. - Impots taxes - Charges pers.", ebeN, ebeN1, caN, caN1) : ligne = ligne + 2
+    Call EcrireLigneSIG(ws, ligne, "5. RESULTAT D'EXPLOITATION (REX)", "EBE - Dotations + Reprises + Autres prod./charges", rexN, rexN1, caN, caN1) : ligne = ligne + 2
+    Call EcrireLigneSIG(ws, ligne, "6. RESULTAT COURANT AVANT IS (RCA)", "REX + Resultat financier", rcaN, rcaN1, caN, caN1) : ligne = ligne + 2
+    Call EcrireLigneSIG(ws, ligne, "7. RESULTAT EXCEPTIONNEL", "Produits except. - Charges except.", resExcN, resExcN1, caN, caN1) : ligne = ligne + 2
+    Call EcrireLigneSIG(ws, ligne, "8. RESULTAT NET DE L'EXERCICE", "RCA + Res. except. - Participation - IS", resNetN, resNetN1, caN, caN1) : ligne = ligne + 3
 
-    Call EcrireLigneSIG(ws, ligne, "2. PRODUCTION DE L'EXERCICE", "CA + Prod. stockée + Prod. immobilisée", prodN, prodN1, caN, caN1, True)
-    ligne = ligne + 2
-
-    Call EcrireLigneSIG(ws, ligne, "3. VALEUR AJOUTEE (VA)", "Marge com. + Prod. exer. - Consommations intermediaires", vaH, vaH1, caN, caN1, True)
-    ligne = ligne + 1
-    ws.Cells(ligne, 2).Value = "  = Richesse créée par l'entreprise"
-    ws.Cells(ligne, 2).Font.Italic = True
-    ws.Cells(ligne, 2).Font.Color = RGB(128, 128, 128)
-    ligne = ligne + 2
-
-    Call EcrireLigneSIG(ws, ligne, "4. EXCEDENT BRUT D'EXPLOITATION (EBE)", "VA + Subv. expl. - Impôts taxes - Charges pers.", ebeN, ebeN1, caN, caN1, True)
-    ligne = ligne + 1
-    ws.Cells(ligne, 2).Value = "  = Capacité à générer de la trésorerie par l'exploitation"
-    ws.Cells(ligne, 2).Font.Italic = True
-    ws.Cells(ligne, 2).Font.Color = RGB(128, 128, 128)
-    ligne = ligne + 2
-
-    Call EcrireLigneSIG(ws, ligne, "5. RESULTAT D'EXPLOITATION (REX)", "EBE - Dotations + Reprises + Autres prod./charges expl.", rexN, rexN1, caN, caN1, True)
-    ligne = ligne + 2
-
-    Call EcrireLigneSIG(ws, ligne, "6. RESULTAT COURANT AVANT IS (RCA)", "REX + Résultat financier", rcaN, rcaN1, caN, caN1, True)
-    ligne = ligne + 2
-
-    Call EcrireLigneSIG(ws, ligne, "7. RESULTAT EXCEPTIONNEL", "Produits except. - Charges except.", resExcN, resExcN1, caN, caN1, False)
-    ligne = ligne + 2
-
-    Call EcrireLigneSIG(ws, ligne, "8. RESULTAT NET DE L'EXERCICE", "RCA + Res. except. - Participation - IS", resNetN, resNetN1, caN, caN1, True)
-    ligne = ligne + 3
-
-    ' ---- Tableau des ratios SIG ----
+    ' Ratios
     ws.Cells(ligne, 1).Value = "RATIOS DE RENTABILITE"
     With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 8))
         .Interior.Color = RGB(197, 90, 17)
@@ -826,74 +714,33 @@ Sub CreerOngletSIG()
     End With
     ligne = ligne + 1
 
-    ws.Cells(3, 1).ColumnWidth = 45
-
-    Dim ratios() As String
-    Dim valeursN() As Double, valeursN1() As Double
-    ReDim ratios(9), valeursN(9), valeursN1(9)
-    ratios(0) = "Taux de marge commerciale (Marge com. / CA)"
-    ratios(1) = "Taux de VA / CA"
-    ratios(2) = "Taux d'EBE / CA (EBITDA margin)"
-    ratios(3) = "Taux de REX / CA (EBIT margin)"
-    ratios(4) = "Taux de RCA / CA"
-    ratios(5) = "Taux de résultat net / CA (marge nette)"
-    ratios(6) = "Personnel / VA"
-    ratios(7) = "Dotations amort. / Immo. brutes"
-    ratios(8) = "Charges financières / EBE (taux couverture)"
-    ratios(9) = "IS / Résultat avant IS (taux IS effectif)"
-
-    If caN <> 0 Then valeursN(0) = margeComN / caN
-    If caN1 <> 0 Then valeursN1(0) = margeComN1 / caN1
-    If caN <> 0 Then valeursN(1) = vaH / caN
-    If caN1 <> 0 Then valeursN1(1) = vaH1 / caN1
-    If caN <> 0 Then valeursN(2) = ebeN / caN
-    If caN1 <> 0 Then valeursN1(2) = ebeN1 / caN1
-    If caN <> 0 Then valeursN(3) = rexN / caN
-    If caN1 <> 0 Then valeursN1(3) = rexN1 / caN1
-    If caN <> 0 Then valeursN(4) = rcaN / caN
-    If caN1 <> 0 Then valeursN1(4) = rcaN1 / caN1
-    If caN <> 0 Then valeursN(5) = resNetN / caN
-    If caN1 <> 0 Then valeursN1(5) = resNetN1 / caN1
-    If vaH <> 0 Then valeursN(6) = personnelN / vaH
-    If vaH1 <> 0 Then valeursN1(6) = personnelN1 / vaH1
     Dim immoBrutN As Double, immoBrutN1 As Double
     immoBrutN = GetSoldeCompteN("20") + GetSoldeCompteN("21") + GetSoldeCompteN("22") + GetSoldeCompteN("23")
     immoBrutN1 = GetSoldeCompteN1("20") + GetSoldeCompteN1("21") + GetSoldeCompteN1("22") + GetSoldeCompteN1("23")
-    If immoBrutN <> 0 Then valeursN(7) = dotN / immoBrutN
-    If immoBrutN1 <> 0 Then valeursN1(7) = dotN1 / immoBrutN1
-    If ebeN <> 0 Then valeursN(8) = chargesFinN / ebeN
-    If ebeN1 <> 0 Then valeursN1(8) = chargesFinN1 / ebeN1
+
     Dim rAvtISN As Double, rAvtISN1 As Double
     rAvtISN = rcaN + resExcN
     rAvtISN1 = rcaN1 + resExcN1
-    If rAvtISN <> 0 Then valeursN(9) = isN / rAvtISN
-    If rAvtISN1 <> 0 Then valeursN1(9) = isN1 / rAvtISN1
 
-    Dim j As Integer
-    For j = 0 To 9
-        ws.Cells(ligne, 1).Value = ratios(j)
-        ws.Cells(ligne, 3).Value = valeursN(j)
-        ws.Cells(ligne, 4).Value = valeursN1(j)
-        ws.Cells(ligne, 3).NumberFormat = "0.0%"
-        ws.Cells(ligne, 4).NumberFormat = "0.0%"
-        ws.Cells(ligne, 5).Value = valeursN(j) - valeursN1(j)
-        ws.Cells(ligne, 5).NumberFormat = "0.0pp"
-        If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 8)).Interior.Color = RGB(253, 233, 217)
-        ligne = ligne + 1
-    Next j
+    Call EcrireRatioSIG(ws, ligne, "Taux de marge commerciale", IIf(caN <> 0, margeComN / caN, 0), IIf(caN1 <> 0, margeComN1 / caN1, 0)) : ligne = ligne + 1
+    Call EcrireRatioSIG(ws, ligne, "Taux de VA / CA", IIf(caN <> 0, vaH / caN, 0), IIf(caN1 <> 0, vaH1 / caN1, 0)) : ligne = ligne + 1
+    Call EcrireRatioSIG(ws, ligne, "Taux d'EBE / CA (EBITDA margin)", IIf(caN <> 0, ebeN / caN, 0), IIf(caN1 <> 0, ebeN1 / caN1, 0)) : ligne = ligne + 1
+    Call EcrireRatioSIG(ws, ligne, "Taux de REX / CA (EBIT margin)", IIf(caN <> 0, rexN / caN, 0), IIf(caN1 <> 0, rexN1 / caN1, 0)) : ligne = ligne + 1
+    Call EcrireRatioSIG(ws, ligne, "Taux de RCA / CA", IIf(caN <> 0, rcaN / caN, 0), IIf(caN1 <> 0, rcaN1 / caN1, 0)) : ligne = ligne + 1
+    Call EcrireRatioSIG(ws, ligne, "Marge nette / CA", IIf(caN <> 0, resNetN / caN, 0), IIf(caN1 <> 0, resNetN1 / caN1, 0)) : ligne = ligne + 1
+    Call EcrireRatioSIG(ws, ligne, "Personnel / VA", IIf(vaH <> 0, personnelN / vaH, 0), IIf(vaH1 <> 0, personnelN1 / vaH1, 0)) : ligne = ligne + 1
+    Call EcrireRatioSIG(ws, ligne, "Dotations / Immo. brutes", IIf(immoBrutN <> 0, dotN / immoBrutN, 0), IIf(immoBrutN1 <> 0, dotN1 / immoBrutN1, 0)) : ligne = ligne + 1
+    Call EcrireRatioSIG(ws, ligne, "Charges financieres / EBE", IIf(ebeN <> 0, chargesFinN / ebeN, 0), IIf(ebeN1 <> 0, chargesFinN1 / ebeN1, 0)) : ligne = ligne + 1
+    Call EcrireRatioSIG(ws, ligne, "IS effectif / Resultat avant IS", IIf(rAvtISN <> 0, isN / rAvtISN, 0), IIf(rAvtISN1 <> 0, isN1 / rAvtISN1, 0)) : ligne = ligne + 1
 
-    ws.Columns("A").ColumnWidth = 55
+    ws.Columns("A").ColumnWidth = 50
     ws.Columns("B").ColumnWidth = 55
     ws.Columns("C:H").ColumnWidth = 16
-    ws.Range("C4:F50").NumberFormat = "#,##0;[Red]-#,##0"
 End Sub
 
-' Helper SIG
-Sub EcrireLigneSIG(ws As Worksheet, ligne As Long, Libelle As String, Composantes As String, ValN As Double, ValN1 As Double, CaN As Double, CaN1 As Double, Highlight As Boolean)
+Sub EcrireLigneSIG(ws As Worksheet, ligne As Long, Libelle As String, Composantes As String, ValN As Double, ValN1 As Double, CaN As Double, CaN1 As Double)
     With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 8))
-        If Highlight Then
-            .Interior.Color = RGB(253, 233, 217)
-        End If
+        .Interior.Color = RGB(253, 233, 217)
         .Font.Bold = True
         .Borders(xlEdgeTop).LineStyle = xlContinuous
     End With
@@ -911,4 +758,15 @@ Sub EcrireLigneSIG(ws As Worksheet, ligne As Long, Libelle As String, Composante
     ws.Cells(ligne, 6).NumberFormat = "0.0%"
     ws.Cells(ligne, 7).NumberFormat = "0.0%"
     ws.Cells(ligne, 8).NumberFormat = "0.0%"
+End Sub
+
+Sub EcrireRatioSIG(ws As Worksheet, ligne As Long, Libelle As String, ValN As Double, ValN1 As Double)
+    ws.Cells(ligne, 1).Value = Libelle
+    ws.Cells(ligne, 3).Value = ValN
+    ws.Cells(ligne, 4).Value = ValN1
+    ws.Cells(ligne, 5).Value = ValN - ValN1
+    ws.Cells(ligne, 3).NumberFormat = "0.0%"
+    ws.Cells(ligne, 4).NumberFormat = "0.0%"
+    ws.Cells(ligne, 5).NumberFormat = "0.0%"
+    If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 8)).Interior.Color = RGB(253, 233, 217)
 End Sub

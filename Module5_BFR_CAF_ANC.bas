@@ -10,7 +10,7 @@ Sub CreerOngletBFR_CAF()
 
     Set ws = CreerOnglet("BFR-CAF", COULEUR_RATIO)
 
-    With ws.Range("A1:J1")
+    With ws.Range("A1:F1")
         .Merge
         .Value = "BESOIN EN FONDS DE ROULEMENT (BFR) ET CAPACITE D'AUTOFINANCEMENT (CAF)"
         .Interior.Color = RGB(197, 90, 17)
@@ -20,180 +20,104 @@ Sub CreerOngletBFR_CAF()
         .HorizontalAlignment = xlCenter
     End With
 
+    ws.Cells(2, 1).Value = "Indicateur"
+    ws.Cells(2, 2).Value = "N"
+    ws.Cells(2, 3).Value = "N-1"
+    ws.Cells(2, 4).Value = "Variation"
+    With ws.Range("A2:D2")
+        .Font.Bold = True
+        .Interior.Color = RGB(253, 233, 217)
+    End With
+
     ligne = 3
 
-    ' ======================== FONDS DE ROULEMENT ========================
+    ' ======================== FRNG ========================
     ws.Cells(ligne, 1).Value = "I. FONDS DE ROULEMENT NET GLOBAL (FRNG)"
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6))
+    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4))
         .Interior.Color = RGB(197, 90, 17)
         .Font.Color = RGB(255, 255, 255)
         .Font.Bold = True
-        .Font.Size = 12
     End With
     ligne = ligne + 1
 
-    ' Ressources stables
     Dim cpN As Double, cpN1 As Double
     cpN = -(GetSoldeCompteN("101") + GetSoldeCompteN("104") + GetSoldeCompteN("105") + GetSoldeCompteN("106") + GetSoldeCompteN("11") + GetSoldeCompteN("12") + GetSoldeCompteN("13") + GetSoldeCompteN("14") + GetSoldeCompteN("15"))
     cpN1 = -(GetSoldeCompteN1("101") + GetSoldeCompteN1("104") + GetSoldeCompteN1("105") + GetSoldeCompteN1("106") + GetSoldeCompteN1("11") + GetSoldeCompteN1("12") + GetSoldeCompteN1("13") + GetSoldeCompteN1("14") + GetSoldeCompteN1("15"))
 
     Dim dettesLTN As Double, dettesLTN1 As Double
-    dettesLTN = -(GetSoldeCompteN("16") - GetSoldeCompteN("519"))
-    dettesLTN1 = -(GetSoldeCompteN1("16") - GetSoldeCompteN1("519"))
+    dettesLTN = -GetSoldeCompteN("16")
+    dettesLTN1 = -GetSoldeCompteN1("16")
 
-    Dim ressourcesStablesN As Double, ressourcesStablesN1 As Double
-    ressourcesStablesN = cpN + dettesLTN
-    ressourcesStablesN1 = cpN1 + dettesLTN1
+    Dim ressStabN As Double, ressStabN1 As Double
+    ressStabN = cpN + dettesLTN
+    ressStabN1 = cpN1 + dettesLTN1
 
-    ' Emplois stables
     Dim actifImmN As Double, actifImmN1 As Double
     actifImmN = GetSoldeCompteN("20") + GetSoldeCompteN("21") + GetSoldeCompteN("22") + GetSoldeCompteN("23") + GetSoldeCompteN("26") + GetSoldeCompteN("27") + GetSoldeCompteN("28") + GetSoldeCompteN("29")
     actifImmN1 = GetSoldeCompteN1("20") + GetSoldeCompteN1("21") + GetSoldeCompteN1("22") + GetSoldeCompteN1("23") + GetSoldeCompteN1("26") + GetSoldeCompteN1("27") + GetSoldeCompteN1("28") + GetSoldeCompteN1("29")
 
     Dim frngN As Double, frngN1 As Double
-    frngN = ressourcesStablesN - actifImmN
-    frngN1 = ressourcesStablesN1 - actifImmN1
+    frngN = ressStabN - actifImmN
+    frngN1 = ressStabN1 - actifImmN1
 
-    ws.Cells(ligne, 1).Value = "Ressources stables (CP + Dettes LMT)"
-    ws.Cells(ligne, 2).Value = ressourcesStablesN
-    ws.Cells(ligne, 3).Value = ressourcesStablesN1
-    ws.Cells(ligne, 4).Value = ressourcesStablesN - ressourcesStablesN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(198, 224, 180)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "(-) Actif immobilise net"
-    ws.Cells(ligne, 2).Value = actifImmN
-    ws.Cells(ligne, 3).Value = actifImmN1
-    ws.Cells(ligne, 4).Value = actifImmN - actifImmN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(255, 199, 206)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "= FRNG"
-    ws.Cells(ligne, 2).Value = frngN
-    ws.Cells(ligne, 3).Value = frngN1
-    ws.Cells(ligne, 4).Value = frngN - frngN1
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4))
-        .Font.Bold = True
-        .Interior.Color = RGB(253, 233, 217)
-        .Borders(xlEdgeTop).LineStyle = xlDouble
-        .Borders(xlEdgeBottom).LineStyle = xlDouble
-    End With
-    ligne = ligne + 3
+    Call EcrireLigneBFR(ws, ligne, "Ressources stables (CP + Dettes LMT)", ressStabN, ressStabN1, RGB(198, 224, 180)) : ligne = ligne + 1
+    Call EcrireLigneBFR(ws, ligne, "(-) Actif immobilise net", actifImmN, actifImmN1, RGB(255, 199, 206)) : ligne = ligne + 1
+    Call EcrireTotalBFR(ws, ligne, "= FRNG", frngN, frngN1) : ligne = ligne + 3
 
     ' ======================== BFR ========================
     ws.Cells(ligne, 1).Value = "II. BESOIN EN FONDS DE ROULEMENT (BFR)"
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6))
+    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4))
         .Interior.Color = RGB(197, 90, 17)
         .Font.Color = RGB(255, 255, 255)
         .Font.Bold = True
-        .Font.Size = 12
     End With
     ligne = ligne + 1
 
-    ' Actif circulant hors tresorerie
     Dim stocksN As Double, stocksN1 As Double
     stocksN = GetSoldeCompteN("31") + GetSoldeCompteN("32") + GetSoldeCompteN("33") + GetSoldeCompteN("34") + GetSoldeCompteN("35") + GetSoldeCompteN("37") + GetSoldeCompteN("39")
     stocksN1 = GetSoldeCompteN1("31") + GetSoldeCompteN1("32") + GetSoldeCompteN1("33") + GetSoldeCompteN1("34") + GetSoldeCompteN1("35") + GetSoldeCompteN1("37") + GetSoldeCompteN1("39")
 
-    Dim creancesCliN As Double, creancesCliN1 As Double
-    creancesCliN = GetSoldeCompteN("41") + GetSoldeCompteN("490")
-    creancesCliN1 = GetSoldeCompteN1("41") + GetSoldeCompteN1("490")
+    Dim creCliN As Double, creCliN1 As Double
+    creCliN = GetSoldeCompteN("41") + GetSoldeCompteN("490")
+    creCliN1 = GetSoldeCompteN1("41") + GetSoldeCompteN1("490")
 
-    Dim autresCreancesN As Double, autresCreancesN1 As Double
-    autresCreancesN = GetSoldeCompteN("44") + GetSoldeCompteN("45") + GetSoldeCompteN("46") + GetSoldeCompteN("48")
-    autresCreancesN1 = GetSoldeCompteN1("44") + GetSoldeCompteN1("45") + GetSoldeCompteN1("46") + GetSoldeCompteN1("48")
+    Dim autCreN As Double, autCreN1 As Double
+    autCreN = GetSoldeCompteN("44") + GetSoldeCompteN("45") + GetSoldeCompteN("46") + GetSoldeCompteN("48")
+    autCreN1 = GetSoldeCompteN1("44") + GetSoldeCompteN1("45") + GetSoldeCompteN1("46") + GetSoldeCompteN1("48")
 
-    Dim acircHorsTresN As Double, acircHorsTresN1 As Double
-    acircHorsTresN = stocksN + creancesCliN + autresCreancesN
-    acircHorsTresN1 = stocksN1 + creancesCliN1 + autresCreancesN1
+    Dim detFournN As Double, detFournN1 As Double
+    detFournN = -GetSoldeCompteN("40")
+    detFournN1 = -GetSoldeCompteN1("40")
+    If detFournN < 0 Then detFournN = 0
+    If detFournN1 < 0 Then detFournN1 = 0
 
-    ' Passif circulant hors CBC
-    Dim dettesFournN As Double, dettesFournN1 As Double
-    dettesFournN = -(GetSoldeCompteN("40"))
-    dettesFournN1 = -(GetSoldeCompteN1("40"))
+    Dim detFSN As Double, detFSN1 As Double
+    detFSN = Abs(GetSoldeCompteN("42")) + Abs(GetSoldeCompteN("43")) + Abs(GetSoldeCompteN("44")) + Abs(GetSoldeCompteN("45"))
+    detFSN1 = Abs(GetSoldeCompteN1("42")) + Abs(GetSoldeCompteN1("43")) + Abs(GetSoldeCompteN1("44")) + Abs(GetSoldeCompteN1("45"))
 
-    Dim dettesFiscSocN As Double, dettesFiscSocN1 As Double
-    dettesFiscSocN = -(GetSoldeCompteN("42") + GetSoldeCompteN("43") + GetSoldeCompteN("44") + GetSoldeCompteN("45"))
-    dettesFiscSocN1 = -(GetSoldeCompteN1("42") + GetSoldeCompteN1("43") + GetSoldeCompteN1("44") + GetSoldeCompteN1("45"))
-    If dettesFiscSocN < 0 Then dettesFiscSocN = 0
-    If dettesFiscSocN1 < 0 Then dettesFiscSocN1 = 0
+    Dim autDetN As Double, autDetN1 As Double
+    autDetN = Abs(GetSoldeCompteN("46")) + Abs(GetSoldeCompteN("487"))
+    autDetN1 = Abs(GetSoldeCompteN1("46")) + Abs(GetSoldeCompteN1("487"))
 
-    Dim autresDettesN As Double, autresDettesN1 As Double
-    autresDettesN = -(GetSoldeCompteN("46") + GetSoldeCompteN("487"))
-    autresDettesN1 = -(GetSoldeCompteN1("46") + GetSoldeCompteN1("487"))
-    If autresDettesN < 0 Then autresDettesN = 0
-    If autresDettesN1 < 0 Then autresDettesN1 = 0
-
-    Dim pcircHorsCBCN As Double, pcircHorsCBCN1 As Double
-    pcircHorsCBCN = dettesFournN + dettesFiscSocN + autresDettesN
-    pcircHorsCBCN1 = dettesFournN1 + dettesFiscSocN1 + autresDettesN1
-
-    Dim bfrN As Double, bfrN1 As Double
-    bfrN = acircHorsTresN - pcircHorsCBCN
-    bfrN1 = acircHorsTresN1 - pcircHorsCBCN1
-
-    ' Detail BFR exploitation vs hors exploitation
     Dim bfrExplN As Double, bfrExplN1 As Double
-    bfrExplN = stocksN + creancesCliN - dettesFournN - dettesFiscSocN
-    bfrExplN1 = stocksN1 + creancesCliN1 - dettesFournN1 - dettesFiscSocN1
+    bfrExplN = stocksN + creCliN - detFournN - detFSN
+    bfrExplN1 = stocksN1 + creCliN1 - detFournN1 - detFSN1
 
     Dim bfrHExplN As Double, bfrHExplN1 As Double
-    bfrHExplN = autresCreancesN - autresDettesN
-    bfrHExplN1 = autresCreancesN1 - autresDettesN1
+    bfrHExplN = autCreN - autDetN
+    bfrHExplN1 = autCreN1 - autDetN1
 
-    ws.Cells(ligne, 1).Value = "Stocks"
-    ws.Cells(ligne, 2).Value = stocksN
-    ws.Cells(ligne, 3).Value = stocksN1
-    ws.Cells(ligne, 4).Value = stocksN - stocksN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(198, 224, 180)
-    ligne = ligne + 1
+    Dim bfrN As Double, bfrN1 As Double
+    bfrN = bfrExplN + bfrHExplN
+    bfrN1 = bfrExplN1 + bfrHExplN1
 
-    ws.Cells(ligne, 1).Value = "(+) Creances clients et rattachees"
-    ws.Cells(ligne, 2).Value = creancesCliN
-    ws.Cells(ligne, 3).Value = creancesCliN1
-    ws.Cells(ligne, 4).Value = creancesCliN - creancesCliN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(198, 224, 180)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "(+) Autres creances d'exploitation"
-    ws.Cells(ligne, 2).Value = autresCreancesN
-    ws.Cells(ligne, 3).Value = autresCreancesN1
-    ws.Cells(ligne, 4).Value = autresCreancesN - autresCreancesN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(198, 224, 180)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "(-) Dettes fournisseurs"
-    ws.Cells(ligne, 2).Value = dettesFournN
-    ws.Cells(ligne, 3).Value = dettesFournN1
-    ws.Cells(ligne, 4).Value = dettesFournN - dettesFournN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(255, 199, 206)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "(-) Dettes fiscales et sociales"
-    ws.Cells(ligne, 2).Value = dettesFiscSocN
-    ws.Cells(ligne, 3).Value = dettesFiscSocN1
-    ws.Cells(ligne, 4).Value = dettesFiscSocN - dettesFiscSocN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(255, 199, 206)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "(-) Autres dettes d'exploitation"
-    ws.Cells(ligne, 2).Value = autresDettesN
-    ws.Cells(ligne, 3).Value = autresDettesN1
-    ws.Cells(ligne, 4).Value = autresDettesN - autresDettesN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(255, 199, 206)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "= BFR TOTAL"
-    ws.Cells(ligne, 2).Value = bfrN
-    ws.Cells(ligne, 3).Value = bfrN1
-    ws.Cells(ligne, 4).Value = bfrN - bfrN1
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4))
-        .Font.Bold = True
-        .Interior.Color = RGB(253, 233, 217)
-        .Borders(xlEdgeTop).LineStyle = xlDouble
-        .Borders(xlEdgeBottom).LineStyle = xlDouble
-    End With
-    ligne = ligne + 2
+    Call EcrireLigneBFR(ws, ligne, "Stocks", stocksN, stocksN1, RGB(198, 224, 180)) : ligne = ligne + 1
+    Call EcrireLigneBFR(ws, ligne, "(+) Creances clients", creCliN, creCliN1, RGB(198, 224, 180)) : ligne = ligne + 1
+    Call EcrireLigneBFR(ws, ligne, "(+) Autres creances d'exploitation", autCreN, autCreN1, RGB(198, 224, 180)) : ligne = ligne + 1
+    Call EcrireLigneBFR(ws, ligne, "(-) Dettes fournisseurs", detFournN, detFournN1, RGB(255, 199, 206)) : ligne = ligne + 1
+    Call EcrireLigneBFR(ws, ligne, "(-) Dettes fiscales et sociales", detFSN, detFSN1, RGB(255, 199, 206)) : ligne = ligne + 1
+    Call EcrireLigneBFR(ws, ligne, "(-) Autres dettes d'exploitation", autDetN, autDetN1, RGB(255, 199, 206)) : ligne = ligne + 1
+    Call EcrireTotalBFR(ws, ligne, "= BFR TOTAL", bfrN, bfrN1) : ligne = ligne + 1
 
     ws.Cells(ligne, 1).Value = "  dont BFR Exploitation"
     ws.Cells(ligne, 2).Value = bfrExplN
@@ -206,20 +130,20 @@ Sub CreerOngletBFR_CAF()
     ws.Cells(ligne, 1).Font.Italic = True
     ligne = ligne + 3
 
-    ' ======================== TRESORERIE NETTE ========================
+    ' ======================== TRESORERIE ========================
     ws.Cells(ligne, 1).Value = "III. TRESORERIE NETTE"
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6))
+    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4))
         .Interior.Color = RGB(197, 90, 17)
         .Font.Color = RGB(255, 255, 255)
         .Font.Bold = True
-        .Font.Size = 12
     End With
     ligne = ligne + 1
 
     Dim tresActN As Double, tresActN1 As Double
-    Dim cbcN As Double, cbcN1 As Double
     tresActN = GetSoldeCompteN("50") + GetSoldeCompteN("51") + GetSoldeCompteN("53") + GetSoldeCompteN("54")
     tresActN1 = GetSoldeCompteN1("50") + GetSoldeCompteN1("51") + GetSoldeCompteN1("53") + GetSoldeCompteN1("54")
+
+    Dim cbcN As Double, cbcN1 As Double
     cbcN = GetSoldeCompteN("519")
     cbcN1 = GetSoldeCompteN1("519")
 
@@ -227,63 +151,28 @@ Sub CreerOngletBFR_CAF()
     tresNetteN = tresActN + cbcN
     tresNetteN1 = tresActN1 + cbcN1
 
-    ws.Cells(ligne, 1).Value = "Tresorerie active (disponibilites + VMP)"
-    ws.Cells(ligne, 2).Value = tresActN
-    ws.Cells(ligne, 3).Value = tresActN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(198, 224, 180)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "(-) Concours bancaires courants (519)"
-    ws.Cells(ligne, 2).Value = cbcN
-    ws.Cells(ligne, 3).Value = cbcN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(255, 199, 206)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "= TRESORERIE NETTE"
-    ws.Cells(ligne, 2).Value = tresNetteN
-    ws.Cells(ligne, 3).Value = tresNetteN1
-    ws.Cells(ligne, 4).Value = tresNetteN - tresNetteN1
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4))
-        .Font.Bold = True
-        .Interior.Color = RGB(253, 233, 217)
-        .Borders(xlEdgeTop).LineStyle = xlDouble
-        .Borders(xlEdgeBottom).LineStyle = xlDouble
-    End With
-    ligne = ligne + 2
+    Call EcrireLigneBFR(ws, ligne, "Tresorerie active (dispo + VMP)", tresActN, tresActN1, RGB(198, 224, 180)) : ligne = ligne + 1
+    Call EcrireLigneBFR(ws, ligne, "(-) Concours bancaires courants (519)", cbcN, cbcN1, RGB(255, 199, 206)) : ligne = ligne + 1
+    Call EcrireTotalBFR(ws, ligne, "= TRESORERIE NETTE", tresNetteN, tresNetteN1) : ligne = ligne + 3
 
     ' Verification FRNG = BFR + TN
     ws.Cells(ligne, 1).Value = "VERIFICATION : FRNG = BFR + Tresorerie Nette"
     ws.Cells(ligne, 1).Font.Italic = True
     ws.Cells(ligne, 1).Font.Color = RGB(128, 128, 128)
     ligne = ligne + 1
-    ws.Cells(ligne, 1).Value = "  FRNG"
-    ws.Cells(ligne, 2).Value = frngN
-    ws.Cells(ligne, 3).Value = frngN1
-    ligne = ligne + 1
-    ws.Cells(ligne, 1).Value = "  BFR + Tresorerie Nette"
-    ws.Cells(ligne, 2).Value = bfrN + tresNetteN
-    ws.Cells(ligne, 3).Value = bfrN1 + tresNetteN1
-    ligne = ligne + 1
-    ws.Cells(ligne, 1).Value = "  Ecart (doit etre nul)"
+    ws.Cells(ligne, 1).Value = "Ecart (doit etre proche de zero)"
     ws.Cells(ligne, 2).Value = frngN - (bfrN + tresNetteN)
     ws.Cells(ligne, 3).Value = frngN1 - (bfrN1 + tresNetteN1)
     ws.Cells(ligne, 1).Font.Color = RGB(128, 128, 128)
     ligne = ligne + 4
 
     ' ======================== CAF ========================
-    ws.Cells(ligne, 1).Value = "IV. CAPACITE D'AUTOFINANCEMENT (CAF)"
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6))
+    ws.Cells(ligne, 1).Value = "IV. CAPACITE D'AUTOFINANCEMENT (CAF) - Methode additive"
+    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4))
         .Interior.Color = RGB(197, 90, 17)
         .Font.Color = RGB(255, 255, 255)
         .Font.Bold = True
-        .Font.Size = 12
     End With
-    ligne = ligne + 1
-
-    ' Methode additive (a partir du resultat net)
-    ws.Cells(ligne, 1).Value = "METHODE ADDITIVE (a partir du résultat net)"
-    ws.Cells(ligne, 1).Font.Bold = True
-    ws.Cells(ligne, 1).Font.Underline = xlUnderlineStyleSingle
     ligne = ligne + 1
 
     Dim resNetN As Double, resNetN1 As Double
@@ -299,7 +188,7 @@ Sub CreerOngletBFR_CAF()
     reprTotN1 = -GetSoldeCompteN1("781") - GetSoldeCompteN1("786") - GetSoldeCompteN1("787") - GetSoldeCompteN1("791") - GetSoldeCompteN1("796") - GetSoldeCompteN1("797")
 
     Dim pvCessN As Double, pvCessN1 As Double
-    pvCessN = -GetSoldeCompteN("775") - GetSoldeCompteN("675")  ' PV = produit cession - VNC
+    pvCessN = -GetSoldeCompteN("775") - GetSoldeCompteN("675")
     pvCessN1 = -GetSoldeCompteN1("775") - GetSoldeCompteN1("675")
 
     Dim subvVireesN As Double, subvVireesN1 As Double
@@ -310,66 +199,16 @@ Sub CreerOngletBFR_CAF()
     cafN = resNetN + dotTotN - reprTotN + pvCessN - subvVireesN
     cafN1 = resNetN1 + dotTotN1 - reprTotN1 + pvCessN1 - subvVireesN1
 
-    Sub EcrireLigneCAF(ws As Worksheet, ligne As Long, libelle As String, valN As Double, valN1 As Double, signe As String)
-        ws.Cells(ligne, 1).Value = signe & " " & libelle
-        ws.Cells(ligne, 2).Value = valN
-        ws.Cells(ligne, 3).Value = valN1
-        ws.Cells(ligne, 4).Value = valN - valN1
-        If valN > 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 2)).Interior.Color = RGB(198, 224, 180)
-        If valN < 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 2)).Interior.Color = RGB(255, 199, 206)
-    End Sub
+    Call EcrireLigneBFR(ws, ligne, "Resultat net de l'exercice", resNetN, resNetN1, RGB(198, 224, 180)) : ligne = ligne + 1
+    Call EcrireLigneBFR(ws, ligne, "(+) Dotations aux amort. et provisions", dotTotN, dotTotN1, RGB(198, 224, 180)) : ligne = ligne + 1
+    Call EcrireLigneBFR(ws, ligne, "(-) Reprises sur amort. et provisions", reprTotN, reprTotN1, RGB(255, 199, 206)) : ligne = ligne + 1
+    Call EcrireLigneBFR(ws, ligne, "(-) Plus-values de cession nettes", pvCessN, pvCessN1, RGB(255, 199, 206)) : ligne = ligne + 1
+    Call EcrireLigneBFR(ws, ligne, "(-) Subventions investissement virees", subvVireesN, subvVireesN1, RGB(255, 199, 206)) : ligne = ligne + 1
+    Call EcrireTotalBFR(ws, ligne, "= CAPACITE D'AUTOFINANCEMENT (CAF)", cafN, cafN1) : ligne = ligne + 3
 
-    ws.Cells(ligne, 1).Value = "Résultat net de l'exercice"
-    ws.Cells(ligne, 2).Value = resNetN
-    ws.Cells(ligne, 3).Value = resNetN1
-    ws.Cells(ligne, 4).Value = resNetN - resNetN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(198, 224, 180)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "(+) Dotations aux amortissements et provisions (charges calculées)"
-    ws.Cells(ligne, 2).Value = dotTotN
-    ws.Cells(ligne, 3).Value = dotTotN1
-    ws.Cells(ligne, 4).Value = dotTotN - dotTotN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(198, 224, 180)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "(-) Reprises sur amortissements et provisions (produits calculés)"
-    ws.Cells(ligne, 2).Value = reprTotN
-    ws.Cells(ligne, 3).Value = reprTotN1
-    ws.Cells(ligne, 4).Value = reprTotN - reprTotN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(255, 199, 206)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "(-) Plus-values de cession (produits exceptionnels non récurrents)"
-    ws.Cells(ligne, 2).Value = pvCessN
-    ws.Cells(ligne, 3).Value = pvCessN1
-    ws.Cells(ligne, 4).Value = pvCessN - pvCessN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(255, 199, 206)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "(-) Subventions d'investissement virées au résultat"
-    ws.Cells(ligne, 2).Value = subvVireesN
-    ws.Cells(ligne, 3).Value = subvVireesN1
-    ws.Cells(ligne, 4).Value = subvVireesN - subvVireesN1
-    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(255, 199, 206)
-    ligne = ligne + 1
-
-    ws.Cells(ligne, 1).Value = "= CAPACITE D'AUTOFINANCEMENT (CAF)"
-    ws.Cells(ligne, 2).Value = cafN
-    ws.Cells(ligne, 3).Value = cafN1
-    ws.Cells(ligne, 4).Value = cafN - cafN1
+    ' Ratios
+    ws.Cells(ligne, 1).Value = "RATIOS"
     With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4))
-        .Font.Bold = True
-        .Font.Size = 12
-        .Interior.Color = RGB(253, 233, 217)
-        .Borders(xlEdgeTop).LineStyle = xlDouble
-        .Borders(xlEdgeBottom).LineStyle = xlDouble
-    End With
-    ligne = ligne + 3
-
-    ' Ratios BFR / CAF
-    ws.Cells(ligne, 1).Value = "RATIOS D'ANALYSE"
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6))
         .Interior.Color = RGB(197, 90, 17)
         .Font.Color = RGB(255, 255, 255)
         .Font.Bold = True
@@ -380,82 +219,77 @@ Sub CreerOngletBFR_CAF()
     caN = Abs(-GetSoldeCompteN("70"))
     caN1 = Abs(-GetSoldeCompteN1("70"))
 
-    Dim ratios() As String
-    Dim vN() As Double, vN1() As Double
-    ReDim ratios(7), vN(7), vN1(7)
-
-    ratios(0) = "FRNG / CA (en jours)"
-    ratios(1) = "BFR / CA (en jours)"
-    ratios(2) = "BFR d'exploitation / CA (en jours)"
-    ratios(3) = "Tresorerie Nette / CA (en jours)"
-    ratios(4) = "CAF / Endettement net (capacite remboursement)"
-    ratios(5) = "CAF / CA"
-    ratios(6) = "Couverture BFR par le FRNG (FRNG / BFR)"
-    ratios(7) = "Taux d'autofinancement (CAF / Investissements)"
-
-    If caN <> 0 Then vN(0) = (frngN / caN) * 365
-    If caN1 <> 0 Then vN1(0) = (frngN1 / caN1) * 365
-    If caN <> 0 Then vN(1) = (bfrN / caN) * 365
-    If caN1 <> 0 Then vN1(1) = (bfrN1 / caN1) * 365
-    If caN <> 0 Then vN(2) = (bfrExplN / caN) * 365
-    If caN1 <> 0 Then vN1(2) = (bfrExplN1 / caN1) * 365
-    If caN <> 0 Then vN(3) = (tresNetteN / caN) * 365
-    If caN1 <> 0 Then vN1(3) = (tresNetteN1 / caN1) * 365
-
     Dim endettNetN As Double, endettNetN1 As Double
     endettNetN = Abs(GetSoldeCompteN("16")) - tresActN
     endettNetN1 = Abs(GetSoldeCompteN1("16")) - tresActN1
-    If cafN <> 0 Then vN(4) = endettNetN / cafN
-    If cafN1 <> 0 Then vN1(4) = endettNetN1 / cafN1
-    If caN <> 0 Then vN(5) = cafN / caN
-    If caN1 <> 0 Then vN1(5) = cafN1 / caN1
-    If bfrN <> 0 Then vN(6) = frngN / bfrN
-    If bfrN1 <> 0 Then vN1(6) = frngN1 / bfrN1
 
-    Dim investN As Double, investN1 As Double
-    investN = Abs(GetSoldeCompteN("20") + GetSoldeCompteN("21") + GetSoldeCompteN("22") + GetSoldeCompteN("23")) - Abs(GetSoldeCompteN1("20") + GetSoldeCompteN1("21") + GetSoldeCompteN1("22") + GetSoldeCompteN1("23"))
-    If investN > 0 And cafN <> 0 Then vN(7) = cafN / investN
+    Dim investN As Double
+    Dim immoN As Double, immoN1 As Double
+    immoN = GetSoldeCompteN("20") + GetSoldeCompteN("21") + GetSoldeCompteN("22") + GetSoldeCompteN("23")
+    immoN1 = GetSoldeCompteN1("20") + GetSoldeCompteN1("21") + GetSoldeCompteN1("22") + GetSoldeCompteN1("23")
+    investN = immoN - immoN1
 
-    Dim j As Integer
-    For j = 0 To 7
-        ws.Cells(ligne, 1).Value = ratios(j)
-        ws.Cells(ligne, 2).Value = vN(j)
-        ws.Cells(ligne, 3).Value = vN1(j)
-        ws.Cells(ligne, 4).Value = vN(j) - vN1(j)
-        If j <= 3 Then
-            ws.Cells(ligne, 2).NumberFormat = "0.0 ""j"""
-            ws.Cells(ligne, 3).NumberFormat = "0.0 ""j"""
-            ws.Cells(ligne, 4).NumberFormat = "0.0 ""j"""
-        ElseIf j = 4 Then
-            ws.Cells(ligne, 2).NumberFormat = "0.0x"
-            ws.Cells(ligne, 3).NumberFormat = "0.0x"
-        Else
-            ws.Cells(ligne, 2).NumberFormat = "0.0%"
-            ws.Cells(ligne, 3).NumberFormat = "0.0%"
-            ws.Cells(ligne, 4).NumberFormat = "0.0%"
-        End If
-        If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6)).Interior.Color = RGB(253, 233, 217)
-        ligne = ligne + 1
-    Next j
+    Call EcrireRatioBFR(ws, ligne, "FRNG en jours de CA", IIf(caN <> 0, (frngN / caN) * 365, 0), IIf(caN1 <> 0, (frngN1 / caN1) * 365, 0), "j") : ligne = ligne + 1
+    Call EcrireRatioBFR(ws, ligne, "BFR en jours de CA", IIf(caN <> 0, (bfrN / caN) * 365, 0), IIf(caN1 <> 0, (bfrN1 / caN1) * 365, 0), "j") : ligne = ligne + 1
+    Call EcrireRatioBFR(ws, ligne, "BFR exploitation en jours de CA", IIf(caN <> 0, (bfrExplN / caN) * 365, 0), IIf(caN1 <> 0, (bfrExplN1 / caN1) * 365, 0), "j") : ligne = ligne + 1
+    Call EcrireRatioBFR(ws, ligne, "Tresorerie nette en jours de CA", IIf(caN <> 0, (tresNetteN / caN) * 365, 0), IIf(caN1 <> 0, (tresNetteN1 / caN1) * 365, 0), "j") : ligne = ligne + 1
+    Call EcrireRatioBFR(ws, ligne, "CAF / CA", IIf(caN <> 0, cafN / caN, 0), IIf(caN1 <> 0, cafN1 / caN1, 0), "%") : ligne = ligne + 1
+    Call EcrireRatioBFR(ws, ligne, "Couverture BFR par le FRNG (FRNG/BFR)", IIf(bfrN <> 0, frngN / bfrN, 0), IIf(bfrN1 <> 0, frngN1 / bfrN1, 0), "x") : ligne = ligne + 1
+    Call EcrireRatioBFR(ws, ligne, "Capacite remboursement (Endett.net/CAF)", IIf(cafN <> 0, endettNetN / cafN, 0), IIf(cafN1 <> 0, endettNetN1 / cafN1, 0), "x") : ligne = ligne + 1
+    Call EcrireRatioBFR(ws, ligne, "Taux autofinancement (CAF/Investissements)", IIf(investN > 0, cafN / investN, 0), 0, "%") : ligne = ligne + 1
 
-    ws.Columns("A").ColumnWidth = 60
+    ws.Columns("A").ColumnWidth = 55
     ws.Columns("B:D").ColumnWidth = 18
-    ws.Range("B4:D100").NumberFormat = "#,##0;[Red]-#,##0"
-    ws.Cells(3, 2).Value = "N"
-    ws.Cells(3, 3).Value = "N-1"
-    ws.Cells(3, 4).Value = "Variation"
-    With ws.Range("A3:D3")
+    ws.Range("B3:D200").NumberFormat = "#,##0;[Red]-#,##0"
+End Sub
+
+Sub EcrireLigneBFR(ws As Worksheet, ligne As Long, Libelle As String, ValN As Double, ValN1 As Double, Couleur As Long)
+    ws.Cells(ligne, 1).Value = Libelle
+    ws.Cells(ligne, 2).Value = ValN
+    ws.Cells(ligne, 3).Value = ValN1
+    ws.Cells(ligne, 4).Value = ValN - ValN1
+    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = Couleur
+End Sub
+
+Sub EcrireTotalBFR(ws As Worksheet, ligne As Long, Libelle As String, ValN As Double, ValN1 As Double)
+    ws.Cells(ligne, 1).Value = Libelle
+    ws.Cells(ligne, 2).Value = ValN
+    ws.Cells(ligne, 3).Value = ValN1
+    ws.Cells(ligne, 4).Value = ValN - ValN1
+    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4))
         .Font.Bold = True
         .Interior.Color = RGB(253, 233, 217)
+        .Borders(xlEdgeTop).LineStyle = xlDouble
+        .Borders(xlEdgeBottom).LineStyle = xlDouble
     End With
 End Sub
 
+Sub EcrireRatioBFR(ws As Worksheet, ligne As Long, Libelle As String, ValN As Double, ValN1 As Double, Unite As String)
+    ws.Cells(ligne, 1).Value = Libelle
+    ws.Cells(ligne, 2).Value = ValN
+    ws.Cells(ligne, 3).Value = ValN1
+    ws.Cells(ligne, 4).Value = ValN - ValN1
+    Dim fmt As String
+    Select Case Unite
+        Case "j" : fmt = "0.0"
+        Case "x" : fmt = "0.0"
+        Case "%" : fmt = "0.0%"
+        Case Else : fmt = "0.0"
+    End Select
+    ws.Cells(ligne, 2).NumberFormat = fmt
+    ws.Cells(ligne, 3).NumberFormat = fmt
+    ws.Cells(ligne, 4).NumberFormat = fmt
+    If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4)).Interior.Color = RGB(253, 233, 217)
+End Sub
+
 ' ============================================================
-' ANNEXE ANC - ETATS FINANCIERS NORMALISES
+' ANNEXE ANC
 ' ============================================================
 Sub CreerOngletANC()
     Dim ws As Worksheet
     Dim ligne As Long
+    Dim c As Integer
+    Dim ci As Integer
 
     Set ws = CreerOnglet("Annexe ANC", COULEUR_ANC)
 
@@ -478,7 +312,7 @@ Sub CreerOngletANC()
 
     ligne = 4
 
-    ' I. Règles et méthodes comptables
+    ' I. Regles et methodes comptables
     ws.Cells(ligne, 1).Value = "I. REGLES ET METHODES COMPTABLES"
     With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10))
         .Interior.Color = RGB(68, 0, 102)
@@ -488,22 +322,32 @@ Sub CreerOngletANC()
     End With
     ligne = ligne + 1
 
-    Dim rulesMethodes() As String
-    rulesMethodes = Split("Base de preparation : Les comptes ont été établis conformément aux dispositions du Plan Comptable Général (PCG) tel que modifié par le règlement ANC 2014-03.,Principes comptables : Continuité d'exploitation / Permanence des méthodes / Prudence / Indépendance des exercices / Non-compensation.,Immobilisations incorporelles : Amorties linéairement sur leur durée d'utilisation. Les fonds de commerce ne sont pas amortis sauf dépréciation.,Immobilisations corporelles : Amorties selon le mode linéaire ou dégressif fiscal selon la nature du bien.,Stocks : Évalués au coût de revient (PEPS ou CMP selon méthode retenue). Les dépréciations sont constituées sur les stocks obsolètes ou à rotation lente.,Créances : Évaluées à leur valeur nominale. Les créances douteuses font l'objet d'une dépréciation individuelle.,Instruments financiers : Les VMP sont évaluées à leur valeur de marché. Les moins-values latentes sont provisionnées.,Provisions pour risques : Constituées dès que l'obligation est certaine ou probable selon IAS 37 adapté au PCG.,Impôts différés : Non reconnus (option PCG de base). En cas d'adoption du règlement 2022-06 : voir note complémentaire.", ",")
-
-    Dim r As Integer
-    For r = 0 To UBound(rulesMethodes)
-        ws.Cells(ligne, 1).Value = (r + 1) & ". " & rulesMethodes(r)
-        ws.Cells(ligne, 1).WrapText = True
-        ws.Rows(ligne).RowHeight = 30
-        If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10)).Interior.Color = RGB(237, 226, 244)
-        ligne = ligne + 1
-    Next r
+    ws.Cells(ligne, 1).Value = "1. Base : Comptes etablis selon le PCG (reglement ANC 2014-03)"
+    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10)).Interior.Color = RGB(237, 226, 244)
+    ws.Cells(ligne, 1).WrapText = True
+    ligne = ligne + 1
+    ws.Cells(ligne, 1).Value = "2. Principes : Continuite exploitation / Permanence methodes / Prudence / Independence exercices"
+    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10)).Interior.Color = RGB(255, 255, 255)
+    ligne = ligne + 1
+    ws.Cells(ligne, 1).Value = "3. Immobilisations incorporelles : Amortissement lineaire sur duree d'utilite. Fonds de commerce non amorti sauf depreciation."
+    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10)).Interior.Color = RGB(237, 226, 244)
+    ligne = ligne + 1
+    ws.Cells(ligne, 1).Value = "4. Immobilisations corporelles : Mode lineaire ou degressif fiscal selon nature du bien."
+    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10)).Interior.Color = RGB(255, 255, 255)
+    ligne = ligne + 1
+    ws.Cells(ligne, 1).Value = "5. Stocks : Evalues au cout de revient (PEPS ou CMP). Depreciations sur stocks obsoletes ou a rotation lente."
+    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10)).Interior.Color = RGB(237, 226, 244)
+    ligne = ligne + 1
+    ws.Cells(ligne, 1).Value = "6. Creances : Valeur nominale. Creances douteuses : depreciation individuelle."
+    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10)).Interior.Color = RGB(255, 255, 255)
+    ligne = ligne + 1
+    ws.Cells(ligne, 1).Value = "7. Provisions pour risques : Constituees des que l'obligation est certaine ou probable."
+    ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10)).Interior.Color = RGB(237, 226, 244)
     ligne = ligne + 2
 
-    ' II. Immobilisations - Tableau des mouvements
-    ws.Cells(ligne, 1).Value = "II. TABLEAU DES IMMOBILISATIONS (Art. L.123-22 C.com.)"
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10))
+    ' II. Tableau des immobilisations
+    ws.Cells(ligne, 1).Value = "II. TABLEAU DES IMMOBILISATIONS"
+    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 8))
         .Interior.Color = RGB(68, 0, 102)
         .Font.Color = RGB(255, 255, 255)
         .Font.Bold = True
@@ -511,49 +355,56 @@ Sub CreerOngletANC()
     End With
     ligne = ligne + 1
 
-    ' En-tetes tableau immobilisations
-    Dim entetesImmo() As String
-    entetesImmo = Split("Nature,Debut exercice,Acquisitions,Créations,Apports,Cessions/Retraits,Autres mouvements,Fin exercice", ",")
-    For c = 0 To UBound(entetesImmo)
-        ws.Cells(ligne, c + 1).Value = entetesImmo(c)
-    Next c
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 8))
+    ws.Cells(ligne, 1).Value = "Nature"
+    ws.Cells(ligne, 2).Value = "Debut N"
+    ws.Cells(ligne, 3).Value = "Acquisitions"
+    ws.Cells(ligne, 4).Value = "Cessions/Retraits"
+    ws.Cells(ligne, 5).Value = "Autres mvts"
+    ws.Cells(ligne, 6).Value = "Fin N"
+    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6))
         .Font.Bold = True
         .Interior.Color = RGB(209, 184, 232)
         .HorizontalAlignment = xlCenter
     End With
     ligne = ligne + 1
 
-    ' Lignes immobilisations
-    Dim typesImmo() As String
-    Dim compDebutN() As String
-    typesImmo = Split("Frais établissement (201),Frais R&D (203),Concessions brevets (205),Fonds commercial (207),Autres immo. incorp. (208),Terrains (211),Constructions (213),Install. tech. mat. outillage (215),Autres immo. corp. (218),Immo. en cours (23),Titres participation (261),Autres immo. financ. (27)", ",")
-    compDebutN = Split("201,203,205,207,208,211,213,215,218,23,261,27", ",")
+    Dim typesImmo(5) As String
+    Dim compImmo(5) As String
+    typesImmo(0) = "Immobilisations incorporelles (20)"
+    typesImmo(1) = "Terrains (211)"
+    typesImmo(2) = "Constructions (213)"
+    typesImmo(3) = "Installations techniques (215)"
+    typesImmo(4) = "Autres immo. corporelles (218)"
+    typesImmo(5) = "Immobilisations financieres (26-27)"
+    compImmo(0) = "20"
+    compImmo(1) = "211"
+    compImmo(2) = "213"
+    compImmo(3) = "215"
+    compImmo(4) = "218"
+    compImmo(5) = "26"
 
-    Dim ci As Integer
-    For ci = 0 To UBound(typesImmo)
-        Dim debutN As Double, finN As Double
-        debutN = GetSoldeCompteN1(compDebutN(ci))
-        finN = GetSoldeCompteN(compDebutN(ci))
-        If debutN <> 0 Or finN <> 0 Then
+    For ci = 0 To 5
+        Dim debN2 As Double, finN2 As Double
+        debN2 = GetSoldeCompteN1(compImmo(ci))
+        finN2 = GetSoldeCompteN(compImmo(ci))
+        If debN2 <> 0 Or finN2 <> 0 Then
             ws.Cells(ligne, 1).Value = typesImmo(ci)
-            ws.Cells(ligne, 2).Value = debutN
-            ws.Cells(ligne, 8).Value = finN
-            ws.Cells(ligne, 7).Value = finN - debutN  ' Simplification : mouvement net
-            If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 8)).Interior.Color = RGB(242, 242, 242)
+            ws.Cells(ligne, 2).Value = debN2
+            ws.Cells(ligne, 6).Value = finN2
+            ws.Cells(ligne, 5).Value = finN2 - debN2
+            If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6)).Interior.Color = RGB(242, 242, 242)
             ligne = ligne + 1
         End If
     Next ci
 
-    ' Total immobilisations brutes
-    Dim totImmoDebutN As Double, totImmoFinN As Double
-    totImmoDebutN = GetSoldeCompteN1("20") + GetSoldeCompteN1("21") + GetSoldeCompteN1("22") + GetSoldeCompteN1("23") + GetSoldeCompteN1("26") + GetSoldeCompteN1("27")
-    totImmoFinN = GetSoldeCompteN("20") + GetSoldeCompteN("21") + GetSoldeCompteN("22") + GetSoldeCompteN("23") + GetSoldeCompteN("26") + GetSoldeCompteN("27")
+    Dim totImmoN As Double, totImmoN1 As Double
+    totImmoN = GetSoldeCompteN("20") + GetSoldeCompteN("21") + GetSoldeCompteN("22") + GetSoldeCompteN("23") + GetSoldeCompteN("26") + GetSoldeCompteN("27")
+    totImmoN1 = GetSoldeCompteN1("20") + GetSoldeCompteN1("21") + GetSoldeCompteN1("22") + GetSoldeCompteN1("23") + GetSoldeCompteN1("26") + GetSoldeCompteN1("27")
     ws.Cells(ligne, 1).Value = "TOTAL IMMOBILISATIONS BRUTES"
-    ws.Cells(ligne, 2).Value = totImmoDebutN
-    ws.Cells(ligne, 8).Value = totImmoFinN
-    ws.Cells(ligne, 7).Value = totImmoFinN - totImmoDebutN
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 8))
+    ws.Cells(ligne, 2).Value = totImmoN1
+    ws.Cells(ligne, 6).Value = totImmoN
+    ws.Cells(ligne, 5).Value = totImmoN - totImmoN1
+    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6))
         .Font.Bold = True
         .Interior.Color = RGB(209, 184, 232)
     End With
@@ -561,7 +412,7 @@ Sub CreerOngletANC()
 
     ' III. Tableau des amortissements
     ws.Cells(ligne, 1).Value = "III. TABLEAU DES AMORTISSEMENTS ET DEPRECIATIONS"
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10))
+    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6))
         .Interior.Color = RGB(68, 0, 102)
         .Font.Color = RGB(255, 255, 255)
         .Font.Bold = True
@@ -569,31 +420,42 @@ Sub CreerOngletANC()
     End With
     ligne = ligne + 1
 
-    Dim entetesAmort() As String
-    entetesAmort = Split("Nature,Debut exercice,Dotations exercice,Reprises exercice,Fin exercice", ",")
-    For c = 0 To UBound(entetesAmort)
-        ws.Cells(ligne, c + 1).Value = entetesAmort(c)
-    Next c
+    ws.Cells(ligne, 1).Value = "Nature"
+    ws.Cells(ligne, 2).Value = "Debut N"
+    ws.Cells(ligne, 3).Value = "Dotations"
+    ws.Cells(ligne, 4).Value = "Reprises"
+    ws.Cells(ligne, 5).Value = "Fin N"
     With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 5))
         .Font.Bold = True
         .Interior.Color = RGB(209, 184, 232)
     End With
     ligne = ligne + 1
 
-    Dim amortCompN1 As Double, amortCompN As Double, dotAmortN As Double
-    amortCompN1 = -(GetSoldeCompteN1("28") + GetSoldeCompteN1("29"))
-    amortCompN = -(GetSoldeCompteN("28") + GetSoldeCompteN("29"))
+    Dim amortDebN As Double, amortFinN As Double
+    amortDebN = -(GetSoldeCompteN1("28") + GetSoldeCompteN1("29"))
+    amortFinN = -(GetSoldeCompteN("28") + GetSoldeCompteN("29"))
+    Dim dotAmortN As Double
     dotAmortN = GetSoldeCompteN("681")
-    ws.Cells(ligne, 1).Value = "Amortissements immobilisations corporelles et incorporelles"
-    ws.Cells(ligne, 2).Value = amortCompN1
+    ws.Cells(ligne, 1).Value = "Amortissements des immobilisations"
+    ws.Cells(ligne, 2).Value = amortDebN
     ws.Cells(ligne, 3).Value = dotAmortN
-    ws.Cells(ligne, 5).Value = amortCompN
-    ws.Cells(ligne, 4).Value = amortCompN - amortCompN1 - dotAmortN  ' Reprises (négatif = correction)
-    ligne = ligne + 2
+    ws.Cells(ligne, 4).Value = amortFinN - amortDebN - dotAmortN
+    ws.Cells(ligne, 5).Value = amortFinN
+    ligne = ligne + 1
+
+    Dim depCliDebN As Double, depCliFinN As Double
+    depCliDebN = -GetSoldeCompteN1("490")
+    depCliFinN = -GetSoldeCompteN("490")
+    ws.Cells(ligne, 1).Value = "Depreciations clients (490)"
+    ws.Cells(ligne, 2).Value = depCliDebN
+    ws.Cells(ligne, 5).Value = depCliFinN
+    ws.Cells(ligne, 3).Value = IIf(depCliFinN > depCliDebN, depCliFinN - depCliDebN, 0)
+    ws.Cells(ligne, 4).Value = IIf(depCliFinN < depCliDebN, depCliDebN - depCliFinN, 0)
+    ligne = ligne + 3
 
     ' IV. Provisions pour risques et charges
     ws.Cells(ligne, 1).Value = "IV. TABLEAU DES PROVISIONS POUR RISQUES ET CHARGES"
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10))
+    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6))
         .Interior.Color = RGB(68, 0, 102)
         .Font.Color = RGB(255, 255, 255)
         .Font.Bold = True
@@ -601,23 +463,30 @@ Sub CreerOngletANC()
     End With
     ligne = ligne + 1
 
-    Dim entetesProvRisques() As String
-    entetesProvRisques = Split("Nature,Debut N,Dotations,Reprises utilisées,Reprises non util.,Fin N", ",")
-    For c = 0 To UBound(entetesProvRisques)
-        ws.Cells(ligne, c + 1).Value = entetesProvRisques(c)
-    Next c
+    ws.Cells(ligne, 1).Value = "Nature"
+    ws.Cells(ligne, 2).Value = "Debut N"
+    ws.Cells(ligne, 3).Value = "Dotations"
+    ws.Cells(ligne, 4).Value = "Reprises utilisees"
+    ws.Cells(ligne, 5).Value = "Reprises non util."
+    ws.Cells(ligne, 6).Value = "Fin N"
     With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6))
         .Font.Bold = True
         .Interior.Color = RGB(209, 184, 232)
     End With
     ligne = ligne + 1
 
-    Dim provCodes() As String
-    Dim provLabels() As String
-    provCodes = Split("151,152,153,154,155,156,157,158", ",")
-    provLabels = Split("Provisions pour litiges,Prov. garanties données,Prov. pertes marchés,Prov. amendes pénalités,Prov. pertes de change,Prov. pensions retraites,Prov. pour impôts,Autres prov. R&C", ",")
+    Dim provCodes(7) As String
+    Dim provLabels(7) As String
+    provCodes(0) = "151" : provLabels(0) = "Provisions pour litiges"
+    provCodes(1) = "152" : provLabels(1) = "Prov. garanties donnees"
+    provCodes(2) = "153" : provLabels(2) = "Prov. pertes sur marches"
+    provCodes(3) = "154" : provLabels(3) = "Prov. amendes penalites"
+    provCodes(4) = "155" : provLabels(4) = "Prov. pertes de change"
+    provCodes(5) = "156" : provLabels(5) = "Prov. pensions retraites"
+    provCodes(6) = "157" : provLabels(6) = "Prov. pour impots"
+    provCodes(7) = "158" : provLabels(7) = "Autres prov. R&C"
 
-    For ci = 0 To UBound(provCodes)
+    For ci = 0 To 7
         Dim pDebN As Double, pFinN As Double
         pDebN = -GetSoldeCompteN1(provCodes(ci))
         pFinN = -GetSoldeCompteN(provCodes(ci))
@@ -625,30 +494,30 @@ Sub CreerOngletANC()
             ws.Cells(ligne, 1).Value = provLabels(ci)
             ws.Cells(ligne, 2).Value = pDebN
             ws.Cells(ligne, 3).Value = IIf(pFinN > pDebN, pFinN - pDebN, 0)
-            ws.Cells(ligne, 4) = IIf(pFinN < pDebN, pDebN - pFinN, 0)
+            ws.Cells(ligne, 4).Value = IIf(pFinN < pDebN, pDebN - pFinN, 0)
             ws.Cells(ligne, 6).Value = pFinN
             If ligne Mod 2 = 0 Then ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6)).Interior.Color = RGB(242, 242, 242)
             ligne = ligne + 1
         End If
     Next ci
 
-    Dim totProvDebN As Double, totProvFinN As Double
-    totProvDebN = -GetSoldeCompteN1("15")
-    totProvFinN = -GetSoldeCompteN("15")
+    Dim totProvN As Double, totProvN1b As Double
+    totProvN = -GetSoldeCompteN("15")
+    totProvN1b = -GetSoldeCompteN1("15")
     ws.Cells(ligne, 1).Value = "TOTAL PROVISIONS R&C"
-    ws.Cells(ligne, 2).Value = totProvDebN
-    ws.Cells(ligne, 3).Value = IIf(totProvFinN > totProvDebN, totProvFinN - totProvDebN, 0)
-    ws.Cells(ligne, 4).Value = IIf(totProvFinN < totProvDebN, totProvDebN - totProvFinN, 0)
-    ws.Cells(ligne, 6).Value = totProvFinN
+    ws.Cells(ligne, 2).Value = totProvN1b
+    ws.Cells(ligne, 3).Value = IIf(totProvN > totProvN1b, totProvN - totProvN1b, 0)
+    ws.Cells(ligne, 4).Value = IIf(totProvN < totProvN1b, totProvN1b - totProvN, 0)
+    ws.Cells(ligne, 6).Value = totProvN
     With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 6))
         .Font.Bold = True
         .Interior.Color = RGB(209, 184, 232)
     End With
     ligne = ligne + 3
 
-    ' V. Etat des créances et dettes
-    ws.Cells(ligne, 1).Value = "V. ETAT DES CREANCES ET DES DETTES (Art. R.123-198 C.com.)"
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10))
+    ' V. Etat des creances et dettes
+    ws.Cells(ligne, 1).Value = "V. ETAT DES CREANCES ET DES DETTES"
+    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 5))
         .Interior.Color = RGB(68, 0, 102)
         .Font.Color = RGB(255, 255, 255)
         .Font.Bold = True
@@ -666,38 +535,33 @@ Sub CreerOngletANC()
     End With
     ligne = ligne + 1
 
-    ' Creances immobilisees > 1 an
     Dim creImmoN As Double
     creImmoN = GetSoldeCompteN("267") + GetSoldeCompteN("274") + GetSoldeCompteN("275")
+    Dim creCliN2 As Double
+    creCliN2 = GetSoldeCompteN("41") + GetSoldeCompteN("490")
+    Dim autCreN2 As Double
+    autCreN2 = GetSoldeCompteN("44") + GetSoldeCompteN("45") + GetSoldeCompteN("46")
+
     If creImmoN <> 0 Then
-        ws.Cells(ligne, 1).Value = "Créances de l'actif immobilisé"
+        ws.Cells(ligne, 1).Value = "Creances de l'actif immobilise (>1 an)"
         ws.Cells(ligne, 2).Value = creImmoN
         ws.Cells(ligne, 3).Value = 0
         ws.Cells(ligne, 4).Value = creImmoN
         ligne = ligne + 1
     End If
-
-    ' Creances clients
-    Dim creCliN As Double
-    creCliN = GetSoldeCompteN("41") + GetSoldeCompteN("490")
-    ws.Cells(ligne, 1).Value = "Créances clients"
-    ws.Cells(ligne, 2).Value = creCliN
-    ws.Cells(ligne, 3).Value = creCliN
+    ws.Cells(ligne, 1).Value = "Creances clients (<1 an)"
+    ws.Cells(ligne, 2).Value = creCliN2
+    ws.Cells(ligne, 3).Value = creCliN2
     ws.Cells(ligne, 4).Value = 0
     ligne = ligne + 1
-
-    ' Autres creances
-    Dim autCreN As Double
-    autCreN = GetSoldeCompteN("44") + GetSoldeCompteN("45") + GetSoldeCompteN("46")
-    ws.Cells(ligne, 1).Value = "Autres créances (fisc., soc., divers)"
-    ws.Cells(ligne, 2).Value = autCreN
-    ws.Cells(ligne, 3).Value = autCreN
+    ws.Cells(ligne, 1).Value = "Autres creances (fiscal, social, divers)"
+    ws.Cells(ligne, 2).Value = autCreN2
+    ws.Cells(ligne, 3).Value = autCreN2
     ws.Cells(ligne, 4).Value = 0
     ligne = ligne + 1
-
     ws.Cells(ligne, 1).Value = "TOTAL CREANCES"
-    ws.Cells(ligne, 2).Value = creImmoN + creCliN + autCreN
-    ws.Cells(ligne, 3).Value = creCliN + autCreN
+    ws.Cells(ligne, 2).Value = creImmoN + creCliN2 + autCreN2
+    ws.Cells(ligne, 3).Value = creCliN2 + autCreN2
     ws.Cells(ligne, 4).Value = creImmoN
     With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4))
         .Font.Bold = True
@@ -716,53 +580,61 @@ Sub CreerOngletANC()
     End With
     ligne = ligne + 1
 
-    ' Dettes financieres (estimation: 1/3 CT, 2/3 MLT simplifiée)
-    Dim detteFinN As Double
-    detteFinN = -GetSoldeCompteN("16")
-    If detteFinN <> 0 Then
-        ws.Cells(ligne, 1).Value = "Emprunts et dettes auprès établissements de crédit"
-        ws.Cells(ligne, 2).Value = detteFinN
-        ws.Cells(ligne, 3).Value = detteFinN * 0.2  ' Hypothèse 20% CT
-        ws.Cells(ligne, 4).Value = detteFinN * 0.5  ' Hypothèse 50% 1-5 ans
-        ws.Cells(ligne, 5).Value = detteFinN * 0.3  ' Hypothèse 30% > 5 ans
-        ws.Cells(ligne, 6).Value = "A ventiler selon tableau d'amortissement"
+    Dim detteFinN2 As Double
+    detteFinN2 = -GetSoldeCompteN("16")
+    If detteFinN2 <> 0 Then
+        ws.Cells(ligne, 1).Value = "Emprunts et dettes aupres etablissements de credit"
+        ws.Cells(ligne, 2).Value = detteFinN2
+        ws.Cells(ligne, 3).Value = detteFinN2 * 0.2
+        ws.Cells(ligne, 4).Value = detteFinN2 * 0.5
+        ws.Cells(ligne, 5).Value = detteFinN2 * 0.3
+        ws.Cells(ligne, 6).Value = "Ventiler selon tableau d'amortissement"
         ws.Cells(ligne, 6).Font.Italic = True
         ws.Cells(ligne, 6).Font.Color = RGB(128, 128, 128)
         ligne = ligne + 1
     End If
 
-    Dim detteFournN As Double
-    detteFournN = -GetSoldeCompteN("40")
-    ws.Cells(ligne, 1).Value = "Dettes fournisseurs et comptes rattachés"
-    ws.Cells(ligne, 2).Value = detteFournN
-    ws.Cells(ligne, 3).Value = detteFournN
+    Dim detteFournN2 As Double
+    detteFournN2 = -GetSoldeCompteN("40")
+    ws.Cells(ligne, 1).Value = "Dettes fournisseurs et comptes rattaches"
+    ws.Cells(ligne, 2).Value = detteFournN2
+    ws.Cells(ligne, 3).Value = detteFournN2
     ligne = ligne + 1
 
-    Dim detteFiscSocN As Double
-    detteFiscSocN = Abs(GetSoldeCompteN("42")) + Abs(GetSoldeCompteN("43")) + Abs(GetSoldeCompteN("44"))
+    Dim detteFSN2 As Double
+    detteFSN2 = Abs(GetSoldeCompteN("42")) + Abs(GetSoldeCompteN("43")) + Abs(GetSoldeCompteN("44"))
     ws.Cells(ligne, 1).Value = "Dettes fiscales et sociales"
-    ws.Cells(ligne, 2).Value = detteFiscSocN
-    ws.Cells(ligne, 3).Value = detteFiscSocN
+    ws.Cells(ligne, 2).Value = detteFSN2
+    ws.Cells(ligne, 3).Value = detteFSN2
     ligne = ligne + 1
 
     ws.Cells(ligne, 1).Value = "TOTAL DETTES"
-    ws.Cells(ligne, 2).Value = detteFinN + detteFournN + detteFiscSocN
-    ws.Cells(ligne, 3).Value = detteFinN * 0.2 + detteFournN + detteFiscSocN
-    ws.Cells(ligne, 4).Value = detteFinN * 0.5
-    ws.Cells(ligne, 5).Value = detteFinN * 0.3
+    ws.Cells(ligne, 2).Value = detteFinN2 + detteFournN2 + detteFSN2
+    ws.Cells(ligne, 3).Value = detteFinN2 * 0.2 + detteFournN2 + detteFSN2
+    ws.Cells(ligne, 4).Value = detteFinN2 * 0.5
+    ws.Cells(ligne, 5).Value = detteFinN2 * 0.3
     With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 5))
         .Font.Bold = True
         .Interior.Color = RGB(209, 184, 232)
     End With
     ligne = ligne + 3
 
-    ' VI. Effectifs
-    ws.Cells(ligne, 1).Value = "VI. INFORMATIONS SUR LE PERSONNEL (Art. L.2323-46 C.trav.)"
-    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 10))
+    ' VI. Informations personnel
+    ws.Cells(ligne, 1).Value = "VI. INFORMATIONS SUR LE PERSONNEL"
+    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 4))
         .Interior.Color = RGB(68, 0, 102)
         .Font.Color = RGB(255, 255, 255)
         .Font.Bold = True
         .Font.Size = 12
+    End With
+    ligne = ligne + 1
+
+    ws.Cells(ligne, 1).Value = "Indicateur"
+    ws.Cells(ligne, 2).Value = "N"
+    ws.Cells(ligne, 3).Value = "N-1"
+    With ws.Range(ws.Cells(ligne, 1), ws.Cells(ligne, 3))
+        .Font.Bold = True
+        .Interior.Color = RGB(209, 184, 232)
     End With
     ligne = ligne + 1
 
@@ -774,28 +646,21 @@ Sub CreerOngletANC()
     ws.Cells(ligne, 2).Value = GetSoldeCompteN("645") + GetSoldeCompteN("646")
     ws.Cells(ligne, 3).Value = GetSoldeCompteN1("645") + GetSoldeCompteN1("646")
     ligne = ligne + 1
-    ws.Cells(ligne, 1).Value = "Participation des salariés (691)"
+    ws.Cells(ligne, 1).Value = "Participation des salaries (691)"
     ws.Cells(ligne, 2).Value = GetSoldeCompteN("691")
     ws.Cells(ligne, 3).Value = GetSoldeCompteN1("691")
     ligne = ligne + 1
-    ws.Cells(ligne, 1).Value = "Note : L'effectif moyen est à renseigner manuellement"
+    ws.Cells(ligne, 1).Value = "Effectif moyen (a renseigner manuellement)"
+    ws.Cells(ligne, 2).Value = ""
+    ws.Cells(ligne, 3).Value = ""
     ws.Cells(ligne, 1).Font.Italic = True
-    ws.Cells(ligne, 1).Font.Color = RGB(128, 128, 128)
+    ligne = ligne + 2
 
-    ' Formatage
+    ws.Cells(ligne, 1).Value = "Reference : Reglement ANC 2014-03 du 05/06/2014 - Plan Comptable General"
+    ws.Cells(ligne, 1).Font.Bold = True
+    ws.Cells(ligne, 1).Font.Color = RGB(68, 0, 102)
+
     ws.Columns("A").ColumnWidth = 60
     ws.Columns("B:J").ColumnWidth = 16
-    ws.Range("B6:J300").NumberFormat = "#,##0;[Red]-#,##0"
-    ws.Rows("1:2").RowHeight = 30
-
-    ' Note de bas de page
-    ligne = ligne + 3
-    ws.Cells(ligne, 1).Value = "REFERENCE REGLEMENTAIRE : Règlement ANC 2014-03 du 05/06/2014 relatif au Plan Comptable Général"
-    ws.Cells(ligne, 1).Font.Bold = True
-    ws.Cells(ligne, 1).Font.Italic = True
-    ws.Cells(ligne, 1).Font.Color = RGB(68, 0, 102)
-    ligne = ligne + 1
-    ws.Cells(ligne, 1).Value = "Les états financiers ci-dessus ont été établis selon les principes et méthodes comptables définis par l'ANC."
-    ws.Cells(ligne, 1).Font.Italic = True
-    ws.Cells(ligne, 1).Font.Color = RGB(128, 128, 128)
+    ws.Range("B6:J500").NumberFormat = "#,##0;[Red]-#,##0"
 End Sub
