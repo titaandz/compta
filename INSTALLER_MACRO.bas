@@ -23,22 +23,8 @@ Sub CreerOngletSourceBalance()
     wsN1.Name = "Balance_N-1"
     wsN1.Tab.Color = RGB(0, 176, 240)
 
-    Dim ws As Worksheet
-    For Each ws In Array(wsN, wsN1)
-        ws.Cells(1, 1).Value = "Numero compte"
-        ws.Cells(1, 2).Value = "Intitule compte"
-        ws.Cells(1, 3).Value = "Debit"
-        ws.Cells(1, 4).Value = "Credit"
-        With ws.Range("A1:D1")
-            .Font.Bold = True
-            .Interior.Color = RGB(31, 73, 125)
-            .Font.Color = RGB(255, 255, 255)
-        End With
-        ws.Columns("A").ColumnWidth = 15
-        ws.Columns("B").ColumnWidth = 50
-        ws.Columns("C:D").ColumnWidth = 18
-        ws.Columns("C:D").NumberFormat = "#,##0.00"
-    Next ws
+    Call FormaterOngletBalance(wsN)
+    Call FormaterOngletBalance(wsN1)
 
     Call InsererExempleBalance(wsN, True)
     Call InsererExempleBalance(wsN1, False)
@@ -141,6 +127,23 @@ Sub InsererExempleBalance(ws As Worksheet, estN As Boolean)
     Call AjLigne(ws, ligne, "775000", "Produits cession actif", 0, 12000 * coeff) : ligne = ligne + 1
     Call AjLigne(ws, ligne, "675000", "VNC elements cedes", 8000 * coeff, 0) : ligne = ligne + 1
     Call AjLigne(ws, ligne, "781000", "Reprises prov. exploitation", 0, 3000 * coeff) : ligne = ligne + 1
+End Sub
+
+' Helper : formater l'en-tete d'un onglet balance
+Sub FormaterOngletBalance(ws As Worksheet)
+    ws.Cells(1, 1).Value = "Numero compte"
+    ws.Cells(1, 2).Value = "Intitule compte"
+    ws.Cells(1, 3).Value = "Debit"
+    ws.Cells(1, 4).Value = "Credit"
+    With ws.Range("A1:D1")
+        .Font.Bold = True
+        .Interior.Color = RGB(31, 73, 125)
+        .Font.Color = RGB(255, 255, 255)
+    End With
+    ws.Columns("A").ColumnWidth = 15
+    ws.Columns("B").ColumnWidth = 50
+    ws.Columns("C:D").ColumnWidth = 18
+    ws.Columns("C:D").NumberFormat = "#,##0.00"
 End Sub
 
 ' Helper : ecrire une ligne de balance
